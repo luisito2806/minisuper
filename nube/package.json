@@ -1,0 +1,25 @@
+{
+  "name": "minisuper-nube",
+  "version": "0.1.0",
+  "description": "Panel en la nube (solo consulta) que recibe los datos de una o varias tiendas Mini Súper.",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "crear-tienda": "node scripts/crear-tienda.js",
+    "crear-usuario": "node scripts/crear-usuario.js",
+    "desvincular-tienda": "node scripts/desvincular-tienda.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fontsource-variable/nunito-sans": "^5.3.0",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "express-session": "^1.19.0",
+    "pg": "^8.23.1"
+  }
+}

@@ -1,0 +1,4 @@
+Scripts SQL de la versión anterior (antes de usar Sequelize).
+
+Ya NO se usan: ahora las tablas se definen en src/models/*.model.js y las
+crea la aplicación al arrancar. Se conservan solo como referencia.

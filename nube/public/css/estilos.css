@@ -1,0 +1,409 @@
+/* =====================================================================
+   Estilo: lienzo blanco, superficies "Fog", texto grafito, naranja como
+   acento de marca y verde para lo positivo. Plano (sin sombras), radio
+   de 26px en botones, tarjetas, campos y etiquetas.
+   Tipografía: Nunito Sans (sustituto de Aquawax Pro), servida localmente.
+   ===================================================================== */
+
+@font-face {
+  font-family: 'Nunito Sans';
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url('/fuentes/nunito-sans-latin-wght-normal.woff2') format('woff2');
+}
+
+:root {
+  /* Paleta */
+  --color-ember-orange: #ff5406;
+  --color-verdant-green: #00b33f;
+  --color-signal-red-orange: #ff3400;
+  --color-sky-blue: #00a9dd;
+  --color-graphite: #2f2f2f;
+  --color-charcoal: #000000;
+  --color-fog: #f5f5f5;
+  --color-paper-white: #ffffff;
+
+  /* Roles */
+  --bg: var(--color-paper-white);
+  --surface: var(--color-paper-white);
+  --surface-2: var(--color-fog);
+  --text: var(--color-graphite);
+  --muted: #666666;
+  --hairline: #ebebeb;
+  --marca: var(--color-ember-orange);
+  /* Variantes oscuras de los acentos para texto pequeño legible (WCAG AA). */
+  --ok-texto: #00702a;
+  --ok-fondo: #e3f6ea;
+  --alerta-texto: #a33a00;
+  --alerta-fondo: #fff0e5;
+  --mal-texto: #c42200;
+  --mal-fondo: #ffe9e4;
+  --info-texto: #006d8f;
+  --focus: #00a9dd;
+
+  --font: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius: 26px;
+  --text-tiny: 12px;
+  --text-caption: 14px;
+  --text-body: 16px;
+  --text-subheading: 20px;
+  --text-heading-sm: 22px;
+  --text-heading: 30px;
+  --card-padding: 32px;
+  --element-gap: 20px;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 500 var(--text-body)/1.5 var(--font);
+  font-feature-settings: 'tnum' 0;
+}
+h1, h2, h3 { line-height: 1.2; margin: 0 0 16px; font-weight: 700; color: var(--text); }
+h1 { font-size: var(--text-heading); }
+h2 { font-size: var(--text-heading-sm); }
+h3 { font-size: var(--text-subheading); }
+/* Titular a dos tonos: la palabra de acción en naranja, el resto en grafito. */
+.acento { color: var(--marca); }
+.acento-verde { color: var(--color-verdant-green); }
+a { color: var(--text); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.oculto { display: none !important; }
+.muted { color: var(--muted); }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.positivo { color: var(--ok-texto); }
+.negativo { color: var(--mal-texto); }
+
+/* ---------- Barra superior ---------- */
+.barra {
+  display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+  background: var(--surface); border-bottom: 1px solid var(--hairline);
+  padding: 12px 24px; position: sticky; top: 0; z-index: 10;
+}
+.marca { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; color: var(--text); text-decoration: none; }
+.marca .logo {
+  width: 32px; height: 32px; border-radius: 10px; background: var(--marca);
+  display: grid; place-items: center; flex: none;
+}
+.marca .logo svg { width: 18px; height: 18px; }
+.barra nav { display: flex; gap: 2px; flex-wrap: wrap; flex: 1; }
+.barra nav a {
+  position: relative; text-decoration: none; color: var(--text);
+  padding: 8px 11px; border-radius: var(--radius); font-weight: 600;
+}
+.barra nav a:hover { background: var(--surface-2); }
+.barra nav a[aria-current="page"] { color: var(--alerta-texto); }
+.barra nav a[aria-current="page"]::after {
+  content: ''; position: absolute; left: 50%; bottom: 0; width: 6px; height: 6px;
+  margin-left: -3px; border-radius: 50%; background: var(--marca);
+}
+.barra .sesion { display: flex; align-items: center; gap: 12px; font-size: var(--text-caption); }
+.estado-caja { font-size: var(--text-tiny); }
+main { padding: 24px; max-width: 1240px; margin: 0 auto; }
+
+/* ---------- Superficies ---------- */
+.panel {
+  background: var(--surface-2); border-radius: var(--radius);
+  padding: var(--card-padding); margin-bottom: 24px;
+}
+.panel.blanco { background: var(--surface); border: 1px solid var(--hairline); }
+.encabezado { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.encabezado h1, .encabezado h2 { margin: 0; }
+.filtros { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 20px; }
+.tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.tarjeta { background: var(--surface-2); border-radius: var(--radius); padding: 20px 24px; }
+.panel .tarjeta { background: var(--surface); }
+.tarjeta .etiqueta { color: var(--muted); font-size: var(--text-caption); font-weight: 600; }
+.tarjeta .valor { font-size: var(--text-heading-sm); font-weight: 800; font-variant-numeric: tabular-nums; }
+.tarjeta.destacada .valor { color: var(--ok-texto); }
+dl.tarjetas, dl.tarjetas dd { margin: 0; }
+
+/* ---------- Formularios ---------- */
+label { display: flex; flex-direction: column; gap: 6px; font-size: var(--text-caption); font-weight: 600; color: var(--text); }
+label.check { flex-direction: row; align-items: center; gap: 10px; font-weight: 500; font-size: var(--text-body); }
+input, select, textarea {
+  font: 500 var(--text-body) var(--font); color: var(--text); background: var(--surface);
+  border: 1.5px solid #dcdcdc; border-radius: var(--radius); padding: 10px 16px; min-width: 0;
+}
+input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; accent-color: var(--marca); }
+input:hover, select:hover { border-color: #bdbdbd; }
+input[aria-invalid="true"] { border-color: var(--mal-texto); }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--element-gap); }
+.form-grid .ancho { grid-column: 1 / -1; }
+fieldset { border: 0; padding: 0; margin: 0 0 16px; }
+.panel > h3, .panel > .form-grid + h3 { margin-top: 32px; }
+form.tarjeta { display: flex; flex-direction: column; gap: 14px; }
+form.tarjeta h3, form.tarjeta fieldset { margin: 0; }
+fieldset legend { font-size: var(--text-caption); font-weight: 600; margin-bottom: 8px; }
+.opciones { display: flex; gap: 16px; flex-wrap: wrap; }
+.acciones { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap; margin-top: 24px; }
+
+button, .boton {
+  font: 700 var(--text-body) var(--font); cursor: pointer; border-radius: var(--radius);
+  padding: 10px 20px; border: 0; background: var(--surface-2); color: var(--text);
+  text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.panel button:not(.primario):not(.marca-btn):not(.peligro), .tarjeta button:not(.primario) { background: var(--surface); }
+button:hover { filter: brightness(0.96); }
+button.primario { background: var(--color-graphite); color: var(--color-paper-white); }
+/* Naranja de marca solo en texto grande (contraste AA para texto grande). */
+button.marca-btn { background: var(--marca); color: var(--color-paper-white); font-size: 20px; font-weight: 800; padding: 16px 24px; }
+button.peligro { background: var(--mal-fondo); color: var(--mal-texto); }
+button.chico { padding: 6px 14px; font-size: var(--text-caption); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ---------- Tablas ---------- */
+.tabla-wrap { overflow-x: auto; background: var(--surface); border-radius: var(--radius); }
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: 12px 16px; border-bottom: 1px solid var(--hairline); text-align: left; vertical-align: middle; }
+th { font-size: var(--text-tiny); text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; }
+tbody tr:last-child td { border-bottom: 0; }
+tfoot th { font-size: var(--text-body); text-transform: none; letter-spacing: 0; color: var(--text); border-top: 1px solid var(--hairline); border-bottom: 0; }
+tbody tr:hover { background: #fafafa; }
+.vacio { text-align: center; color: var(--muted); padding: 32px; }
+
+/* ---------- Estados (texto + color, nunca solo color) ---------- */
+.estado { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-tiny); font-weight: 700; padding: 4px 12px; border-radius: var(--radius); white-space: nowrap; }
+.estado::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.estado.ok { background: var(--ok-fondo); color: var(--ok-texto); }
+.estado.alerta { background: var(--alerta-fondo); color: var(--alerta-texto); }
+.estado.mal { background: var(--mal-fondo); color: var(--mal-texto); }
+.estado.neutro { background: var(--surface-2); color: var(--muted); }
+.estado.info { background: #e3f5fb; color: var(--info-texto); }
+
+.banner { border-radius: var(--radius); padding: 16px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-weight: 600; }
+.banner.alerta { background: var(--alerta-fondo); color: var(--alerta-texto); }
+.banner.ok { background: var(--ok-fondo); color: var(--ok-texto); }
+
+/* ---------- Mensajes ---------- */
+#avisos { position: fixed; right: 24px; bottom: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 50; max-width: min(440px, calc(100vw - 32px)); }
+.aviso { padding: 14px 20px; border-radius: var(--radius); font-weight: 600; }
+.aviso.ok { background: var(--color-graphite); color: var(--color-paper-white); }
+.aviso.error { background: var(--mal-texto); color: var(--color-paper-white); }
+.error-form { color: var(--mal-texto); font-size: var(--text-caption); font-weight: 600; margin: 12px 0 0; }
+.error-form:empty { margin: 0; }
+
+/* ---------- Diálogos ---------- */
+dialog {
+  border: 0; border-radius: var(--radius); padding: 0;
+  background: var(--surface); color: var(--text); width: min(760px, calc(100vw - 32px));
+}
+dialog::backdrop { background: rgb(47 47 47 / .5); }
+dialog .contenido { padding: var(--card-padding); max-height: 85vh; overflow-y: auto; }
+dialog .tabla-wrap { border: 1px solid var(--hairline); }
+dialog .tarjeta { background: var(--surface-2); }
+
+/* ---------- Punto de venta ---------- */
+.pos { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+.pos .buscador { display: flex; gap: 12px; margin-bottom: 16px; }
+.pos .buscador input { flex: 1; font-size: 18px; padding: 14px 22px; }
+.resultados { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.resultados button { justify-content: space-between; width: 100%; text-align: left; font-weight: 600; }
+.carrito input.cant { width: 100px; text-align: right; padding: 8px 14px; }
+.cobro { background: var(--surface); border: 1px solid var(--hairline); }
+.cobro dl { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; margin: 0 0 20px; }
+.cobro dt { color: var(--muted); font-weight: 600; }
+.cobro dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+.cobro .total { font-size: 36px; font-weight: 800; }
+.cobro label { margin-bottom: 14px; }
+.cobro button.marca-btn { width: 100%; }
+.cobro .cambio-valor { color: var(--ok-texto); font-size: var(--text-subheading); }
+.exito { text-align: center; }
+.exito .folio { font-size: var(--text-heading); font-weight: 800; color: var(--marca); margin: 0; }
+.exito .cambio { font-size: var(--text-subheading); }
+.atajos { color: var(--muted); font-size: var(--text-caption); margin: 16px 0 0; }
+kbd { font: 700 var(--text-tiny) var(--font); background: var(--surface); border-radius: 8px; padding: 2px 8px; }
+
+/* ---------- Login ---------- */
+.login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.login form { width: min(420px, 100%); display: flex; flex-direction: column; gap: var(--element-gap); }
+.login .marca { font-size: 22px; margin-bottom: 8px; }
+
+@media (max-width: 900px) {
+  .pos { grid-template-columns: minmax(0, 1fr); }
+  .barra .sesion { flex-wrap: wrap; }
+  :root { --card-padding: 20px; --text-heading: 26px; }
+  main { padding: 16px; }
+  .barra { padding: 12px 16px; gap: 12px; }
+}
+
+@media print {
+  .barra, #avisos, .no-imprimir, .filtros, .acciones { display: none !important; }
+  body { background: #fff; color: #000; }
+  .panel, .tarjeta { background: #fff; border: 1px solid #ccc; }
+}
+
+/* ---------- Agregados: crédito, nómina, conteo, Excel ---------- */
+.acciones-fila { display: flex; gap: 8px; flex-wrap: wrap; }
+.encabezado .opciones { gap: 12px; }
+.subtitulo { font-size: var(--text-subheading); font-weight: 700; margin: 0 0 16px; }
+tr.resaltada td { background: var(--ok-fondo); transition: background .3s; }
+pre.errores { white-space: pre-wrap; font: 600 var(--text-caption)/1.6 var(--font); color: var(--mal-texto); background: var(--mal-fondo); padding: 16px 20px; border-radius: 16px; }
+code { background: var(--surface); padding: 1px 6px; border-radius: 6px; }
+.opciones.columna { flex-direction: column; gap: 12px; }
+.opciones.columna label.check { align-items: flex-start; }
+.tarjeta.ancho-total { grid-column: 1 / -1; }
+
+/* ---------- Ticket (página del ticket y vista previa en Configuración) ---------- */
+.ticket {
+  width: 80mm; max-width: calc(100vw - 32px); margin: 0 auto 24px; padding: 16px;
+  background: #fff; color: #000; font: 12px/1.4 ui-monospace, Consolas, monospace; border-radius: 12px;
+}
+.ticket h1 { font: 800 16px/1.2 var(--font); text-align: center; margin: 0 0 4px; }
+.ticket .centro { text-align: center; margin: 2px 0; }
+.ticket hr { border: 0; border-top: 1px dashed #000; margin: 8px 0; }
+.ticket .tabla-wrap, .ticket table { width: 100%; background: none; }
+.ticket th, .ticket td { padding: 2px 0; border: 0; background: none; color: #000; font-size: 12px; text-transform: none; letter-spacing: 0; }
+.ticket tbody tr:hover { background: none; }
+.ticket .total td { font-weight: 700; font-size: 14px; }
+.ticket .firma { margin-top: 28px; }
+.ticket .cancelada { text-align: center; font-weight: 700; border: 2px solid #000; padding: 4px; margin: 8px 0; }
+.ticket.ancho-58 { width: 58mm; padding: 10px; font-size: 11px; }
+.ticket.ancho-58 th, .ticket.ancho-58 td { font-size: 11px; }
+.config-ticket { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: start; }
+.config-ticket .vista { background: var(--surface); border-radius: var(--radius); padding: 20px; position: sticky; top: 16px; }
+.config-ticket .vista .ticket { margin: 0 auto; box-shadow: 0 0 0 1px var(--hairline); }
+.config-ticket textarea { resize: vertical; min-height: 84px; font-family: inherit; }
+@media (max-width: 900px) { .config-ticket { grid-template-columns: 1fr; } }
+
+/* =====================================================================
+   Celular y tableta
+   ===================================================================== */
+.menu-boton { display: none; }
+.menu-panel { display: contents; } /* en computadora, como si no existiera */
+.barra nav { order: 1; }
+.barra #estado-caja { order: 2; }
+.barra .sesion { order: 3; }
+.config-ticket .vista .ticket { max-width: 100%; }
+
+@media (max-width: 900px) {
+  /* Barra compacta: tienda · estado de caja · botón Menú. El menú se despliega. */
+  .barra { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px 10px; padding: 10px 12px; }
+  .marca { min-width: 0; font-size: 16px; }
+  .marca #nombre-tienda { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .menu-boton { display: inline-flex; padding: 8px 16px; font-size: var(--text-caption); background: var(--surface-2); }
+  /* Menú: tarjeta al centro, secciones una debajo de otra, fondo oscurecido y difuminado. */
+  .menu-panel { display: none; }
+  .barra.abierta::before {
+    content: ''; position: fixed; inset: 0; z-index: 1;
+    background: rgb(47 47 47 / .45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    animation: menu-fondo .2s ease-out;
+  }
+  .barra.abierta .menu-panel {
+    display: flex; flex-direction: column; gap: 10px;
+    position: fixed; z-index: 2; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: min(340px, calc(100vw - 32px)); max-height: calc(100dvh - 90px); overflow-y: auto;
+    background: var(--surface); border-radius: var(--radius); padding: 16px;
+    box-shadow: 0 24px 60px rgb(0 0 0 / .25);
+    animation: menu-tarjeta .22s ease-out;
+  }
+  .barra.abierta .menu-boton { position: relative; z-index: 3; background: var(--surface); }
+  .barra.abierta nav { display: flex; flex-direction: column; gap: 5px; }
+  .barra.abierta nav a {
+    display: block; text-align: center; font-size: 16px; padding: 10px 16px; background: var(--surface-2);
+  }
+  .barra.abierta nav a[aria-current="page"] { background: var(--alerta-fondo); }
+  .barra.abierta nav a[aria-current="page"]::after { display: none; }
+  .barra.abierta .sesion {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 16px;
+    padding-top: 10px; border-top: 1px solid var(--hairline); text-align: center;
+
+  }
+  .barra.abierta .sesion #usuario-actual { flex: 1 1 100%; color: var(--muted); }
+  body.menu-abierto { overflow: hidden; }
+  .estado-caja { white-space: nowrap; }
+
+  .barra #estado-caja { order: 0; }
+
+}
+
+@media (max-width: 640px) {
+  :root { --card-padding: 16px; --text-heading: 24px; --text-heading-sm: 20px; --element-gap: 14px; }
+  main { padding: 12px; }
+  .panel { margin-bottom: 14px; }
+  .banner { padding: 12px 16px; margin-bottom: 14px; }
+  .encabezado { align-items: stretch; }
+  .encabezado .opciones { width: 100%; }
+  .encabezado .opciones > button, .acciones > button { flex: 1 1 auto; }
+
+  /* Tarjetas de totales: dos por renglón. */
+  .tarjetas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .tarjeta { padding: 12px 14px; border-radius: 18px; }
+  .tarjeta .valor { font-size: 18px; overflow-wrap: anywhere; }
+  .tarjeta.ancho-total { grid-column: 1 / -1; }
+
+  /* Filtros en dos columnas, campos a todo lo ancho. */
+  .filtros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .filtros > * { min-width: 0; }
+  .filtros input, .filtros select { width: 100%; min-width: 0; }
+  .filtros input[type="checkbox"], .filtros input[type="radio"] { width: 20px; flex: none; }
+
+  .filtros > button, .filtros > label.check, .filtros > .ancho { grid-column: 1 / -1; }
+
+  /* Tablas: cada fila es una tarjeta con "Título ...... valor". */
+  .tabla-wrap { overflow: visible; background: transparent; border-radius: 0; }
+  dialog .tabla-wrap { border: 0; }
+  .tabla-wrap thead { display: none; }
+  .tabla-wrap table, .tabla-wrap tbody, .tabla-wrap tfoot { display: block; }
+  .tabla-wrap tbody tr {
+    display: block; background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 16px; padding: 8px 14px; margin-bottom: 10px;
+  }
+  .tabla-wrap tbody tr:hover { background: var(--surface); }
+  .tabla-wrap tbody td { display: block; text-align: right; padding: 6px 0; border: 0; white-space: normal; }
+  .tabla-wrap tbody td + td { border-top: 1px dashed var(--hairline); }
+  .tabla-wrap td::before {
+    content: attr(data-label); float: left; margin-right: 12px; max-width: 48%; text-align: left;
+    font-size: var(--text-tiny); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
+  }
+  .tabla-wrap td::after { content: ''; display: block; clear: both; }
+  .tabla-wrap td[data-label=""]::before, .tabla-wrap td:not([data-label])::before { content: none; }
+  .tabla-wrap td.vacio { text-align: center; }
+  .tabla-wrap .acciones-fila { justify-content: flex-end; }
+  .tabla-wrap tfoot tr { display: flex; justify-content: space-between; gap: 12px; padding: 4px 14px; }
+  .tabla-wrap tfoot th { border: 0; padding: 4px 0; }
+  .tabla-wrap tfoot th::before { content: none; }
+  .tabla-wrap tfoot th:empty { display: none; }
+  .carrito input.cant { width: 90px; }
+
+  /* Punto de venta */
+  .pos .buscador input { font-size: 16px; padding: 12px 18px; }
+  .cobro .total { font-size: 30px; }
+  .atajos { display: none; }
+
+  /* Diálogos casi a pantalla completa */
+  dialog { width: calc(100vw - 16px); max-width: none; }
+  dialog .contenido { padding: 16px; max-height: 88vh; }
+
+  .config-ticket .vista { padding: 10px; position: static; }
+  #avisos { right: 8px; left: 8px; bottom: 8px; max-width: none; }
+}
+
+@keyframes menu-fondo { from { opacity: 0; } to { opacity: 1; } }
+@keyframes menu-tarjeta {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(.97); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .barra.abierta::before, .barra.abierta .menu-panel { animation: none; }
+}
+
+/* Sugerencias de trabajador al cobrar a crédito */
+.sugerencias { margin: -6px 0 8px; }
+.sugerencias:empty { display: none; }
+.sugerencias button { padding: 10px 16px; background: var(--surface-2); }
+.sugerencias button .muted { font-weight: 500; font-size: var(--text-caption); }
+
+/* Proveedores: el botón principal de cada fila */
+.boton-precios { padding: 10px 18px; font-size: var(--text-caption); }
+@media (max-width: 640px) { .tabla-wrap .acciones-fila .boton-precios { flex: 1 1 100%; } }
+
+/* ---------- Nube ---------- */
+.dos-columnas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 24px; }
+.oculto-etiqueta { flex-direction: row; align-items: center; }
+.sesion select { padding: 6px 14px; }
+@media (max-width: 900px) { .barra.abierta .sesion label { flex: 1 1 100%; justify-content: center; } }

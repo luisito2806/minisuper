@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mini Súper 8 Tablas</title>
+<style>
+  :root {
+    --bg: #f7f6f2; --surface: #ffffff; --text: #1d1d1b; --muted: #5d5b55;
+    --border: #e2dfd6; --accent: #1f6f4a; --accent-soft: #e3f1ea;
+    --warn: #8a5a00; --warn-soft: #fbf0d9; --bad: #9b2c2c; --bad-soft: #f8e3e3;
+    --code-bg: #f1efe8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161614; --surface: #1f1f1c; --text: #ecebe6; --muted: #a8a59c;
+      --border: #34332e; --accent: #6fcf9f; --accent-soft: #1b3027;
+      --warn: #e8b85a; --warn-soft: #34290f; --bad: #f08a8a; --bad-soft: #3a1d1d;
+      --code-bg: #2a2a26;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161614; --surface: #1f1f1c; --text: #ecebe6; --muted: #a8a59c;
+    --border: #34332e; --accent: #6fcf9f; --accent-soft: #1b3027;
+    --warn: #e8b85a; --warn-soft: #34290f; --bad: #f08a8a; --bad-soft: #3a1d1d;
+    --code-bg: #2a2a26;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 8px; }
+  h2 { font-size: 1.35rem; margin: 48px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.1rem; margin: 28px 0 8px; }
+  p.lead { color: var(--muted); margin: 0 0 24px; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: .9em; }
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; }
+  nav.toc ol { margin: 0; padding-left: 20px; }
+  nav.toc a { color: var(--accent); text-decoration: none; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .card h3 { margin-top: 0; }
+  .card ul { margin: 0; padding-left: 20px; }
+  .tag { display: inline-block; font-size: .78rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-right: 6px; }
+  .tag.falta { background: var(--warn-soft); color: var(--warn); }
+  .tag.sobra { background: var(--bad-soft); color: var(--bad); }
+  .tag.ok { background: var(--accent-soft); color: var(--accent); }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); margin: 8px 0 4px; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--code-bg); font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-family: ui-monospace, Consolas, monospace; white-space: nowrap; }
+  .tbl-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .tbl-title .num { font-weight: 700; color: var(--accent); }
+  .note { font-size: .9rem; color: var(--muted); margin: 4px 0 0; }
+  .callout { background: var(--accent-soft); border-left: 4px solid var(--accent); padding: 12px 16px; border-radius: 6px; margin: 16px 0; }
+  .callout.warn { background: var(--warn-soft); border-left-color: var(--warn); }
+  ol.steps li, ul.rules li { margin-bottom: 6px; }
+  .rel { font-family: ui-monospace, Consolas, monospace; font-size: .9rem; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Mini Súper: revisión y diseño de 8 tablas</h1>
+<p class="lead">Revisión de <code>MiniSuper-Instrucciones.md</code> para trabajar con PostgreSQL (administrado desde pgAdmin) usando exactamente 8 tablas. Solo instrucciones: la instalación de PostgreSQL y pgAdmin va después.</p>
+
+<nav class="toc">
+  <ol>
+    <li><a href="#veredicto">Veredicto rápido</a></li>
+    <li><a href="#falta">Lo que le falta al .md</a></li>
+    <li><a href="#sobra">Lo que le sobra (para 8 tablas)</a></li>
+    <li><a href="#tablas">Las 8 tablas propuestas</a></li>
+    <li><a href="#relaciones">Relaciones</a></li>
+    <li><a href="#reglas">Reglas de base de datos</a></li>
+    <li><a href="#pasos">Pasos de trabajo</a></li>
+    <li><a href="#pgadmin">Datos a preparar para pgAdmin</a></li>
+    <li><a href="#fase2">Fase 2 (después de las 8 tablas)</a></li>
+  </ol>
+</nav>
+
+<h2 id="veredicto">1. Veredicto rápido</h2>
+<p>El documento está bien escrito como especificación funcional, pero <strong>no está alineado con tu objetivo</strong>: describe un sistema de unas <strong>14–15 tablas</strong> (el punto 3 de implementación pide 10 entidades, más detalle de compras, movimientos de caja, configuración, roles y métodos de pago implícitos) y <strong>no menciona PostgreSQL ni pgAdmin</strong> en ningún lado. Hay que recortar alcance y agregar la parte técnica de la base de datos.</p>
+
+<div class="cards">
+  <div class="card">
+    <h3><span class="tag ok">Se queda</span></h3>
+    <ul>
+      <li>Objetivo y supuestos (una tienda, MXN)</li>
+      <li>Productos, categorías, proveedores</li>
+      <li>Ventas con partidas y cancelación auditada</li>
+      <li>Compras con detalle</li>
+      <li>Roles administrador / cajero</li>
+      <li>Reglas de seguridad y transacciones</li>
+      <li>Criterios de aceptación (ajustados)</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3><span class="tag falta">Falta</span></h3>
+    <ul>
+      <li>Motor de BD: PostgreSQL</li>
+      <li>Lista cerrada de 8 tablas con columnas y tipos</li>
+      <li>Llaves, restricciones, índices</li>
+      <li>Convención de nombres</li>
+      <li>Scripts SQL y datos iniciales</li>
+      <li>Tecnología del backend</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3><span class="tag sobra">Sobra (por ahora)</span></h3>
+    <ul>
+      <li>Módulo de Caja completo</li>
+      <li>Tabla de pagos separada</li>
+      <li>Movimientos de inventario como tabla</li>
+      <li>Módulo de Configuración en pantalla</li>
+      <li>Reglas repetidas en varias secciones</li>
+    </ul>
+  </div>
+</div>
+
+<h2 id="falta">2. Lo que le falta al .md</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Tema</th><th>Qué agregar</th></tr></thead>
+  <tbody>
+    <tr><td>Motor de BD</td><td>Declarar <strong>PostgreSQL</strong> como base de datos y pgAdmin como herramienta de administración. Hoy el documento dice "proponer una opción", lo cual deja todo abierto.</td></tr>
+    <tr><td>Número de tablas</td><td>Fijar las <strong>8 tablas</strong> y prohibir crear otras sin aprobarlo. El punto 3 de "Instrucciones de implementación" lista 10 entidades; hay que reemplazarlo.</td></tr>
+    <tr><td>Columnas y tipos</td><td>Definir cada columna con su tipo: dinero en <code>NUMERIC(10,2)</code> (nunca <code>REAL</code>/<code>FLOAT</code>), cantidades en <code>NUMERIC(10,3)</code> para permitir kg y litros, fechas en <code>TIMESTAMPTZ</code>.</td></tr>
+    <tr><td>Llaves y restricciones</td><td>Llaves primarias, foráneas con <code>ON DELETE RESTRICT</code>, <code>UNIQUE</code> en códigos y folios, <code>CHECK</code> para precios ≥ 0, cantidades &gt; 0, roles y estados válidos.</td></tr>
+    <tr><td>Convención de nombres</td><td>Español, <code>snake_case</code>, sin acentos ni ñ (<code>contrasena_hash</code>, no <code>contraseña</code>), tablas en plural, llaves foráneas como <code>&lt;tabla_singular&gt;_id</code>.</td></tr>
+    <tr><td>Impuestos</td><td>El .md pide "no asumir una tasa fija" pero no dice dónde se guarda. Solución sin tabla extra: columna <code>tasa_iva</code> por producto (en México hay productos al 0 % y al 16 %) y precios con IVA incluido.</td></tr>
+    <tr><td>Folios</td><td>Definir el formato (ej. <code>V-000001</code>, <code>C-000001</code>) generado con una <em>secuencia</em> de PostgreSQL (las secuencias no cuentan como tablas).</td></tr>
+    <tr><td>Scripts SQL</td><td>Pedir archivos versionados: <code>01_esquema.sql</code> (tablas), <code>02_datos_iniciales.sql</code> (admin, categorías, productos de prueba), <code>03_consultas_reportes.sql</code>.</td></tr>
+    <tr><td>Usuario de BD</td><td>Crear un usuario de PostgreSQL propio de la app (ej. <code>minisuper_app</code>) en lugar de usar <code>postgres</code>, y guardar credenciales en <code>.env</code> fuera de git.</td></tr>
+    <tr><td>Zona horaria</td><td>Fijar <code>America/Mexico_City</code> para que los reportes por día cuadren.</td></tr>
+    <tr><td>Respaldo</td><td>El .md pide respaldos pero no dice cómo: usar <code>pg_dump</code> / <code>pg_restore</code> (o Backup/Restore de pgAdmin).</td></tr>
+    <tr><td>Backend</td><td>Falta decidir lenguaje y tipo de app (web o escritorio). Es una decisión que cambia el proyecto: definirla antes de programar (por ejemplo, app web con Node.js + Express o Python + Flask/Django).</td></tr>
+    <tr><td>Diagrama E-R</td><td>Pedir un diagrama entidad-relación (pgAdmin lo genera con <em>ERD Tool</em> una vez creadas las tablas).</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="sobra">3. Lo que le sobra (para 8 tablas)</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Sección del .md</th><th>Problema</th><th>Qué hacer</th></tr></thead>
+  <tbody>
+    <tr><td>6. Caja</td><td>Requiere 2 tablas más (sesiones y movimientos de caja).</td><td>Mover a fase 2. El "corte" del día se obtiene con una consulta sobre <code>ventas</code> por usuario y fecha.</td></tr>
+    <tr><td>Pagos (punto 3 de implementación)</td><td>Una tabla de pagos solo sirve si una venta se paga con varios métodos.</td><td>Un solo método por venta: columnas <code>metodo_pago</code>, <code>monto_recibido</code> y <code>cambio</code> dentro de <code>ventas</code>.</td></tr>
+    <tr><td>3. Inventario: historial y ajustes manuales</td><td>El historial con motivo exige una tabla de movimientos.</td><td>La existencia vive en <code>productos.existencia</code>; entradas y salidas se rastrean desde <code>detalle_compras</code> y <code>detalle_ventas</code>. Ajustes manuales con motivo: fase 2.</td></tr>
+    <tr><td>8. Configuración (pantalla)</td><td>Necesita tabla de configuración y de métodos de pago.</td><td>Datos de la tienda en <code>.env</code>/archivo de configuración; métodos de pago fijos con <code>CHECK</code>; IVA por producto.</td></tr>
+    <tr><td>Política "vender sin existencia"</td><td>Requiere configuración guardada.</td><td>Regla fija: no se vende más de lo disponible.</td></tr>
+    <tr><td>Reportes "cierres de caja" y exportar CSV</td><td>Dependen de lo anterior / no son esenciales.</td><td>Quitar cierres; CSV opcional.</td></tr>
+    <tr><td>Implementación paso 8</td><td>Formateador, análisis estático, compilación: excesivo para el arranque.</td><td>Dejar solo "probar las reglas críticas".</td></tr>
+    <tr><td>Repeticiones</td><td>Transacciones, permisos y auditoría se repiten en 3–4 secciones.</td><td>Concentrarlas una sola vez en "Reglas".</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="tablas">4. Las 8 tablas propuestas</h2>
+<p>Todas usan <code>id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY</code> (se omite abajo para no repetir).</p>
+
+<div class="tbl-title"><span class="num">1</span><h3>usuarios</h3></div>
+<div class="table-wrap"><table>
+  <thead><tr><th>Columna</th><th>Tipo</th><th>Reglas</th></tr></thead>
+  <tbody>
+    <tr><td>nombre</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+    <tr><td>usuario</td><td>VARCHAR(50)</td><td>NOT NULL, UNIQUE</td></tr>
+    <tr><td>contrasena_hash</td><td>VARCHAR(255)</td><td>NOT NULL — hash bcrypt/argon2, nunca texto plano</td></tr>
+    <tr><td>rol</td><td>VARCHAR(20)</td><td>NOT NULL, CHECK IN ('administrador','cajero')</td></tr>
+    <tr><td>activo</td><td>BOOLEAN</td><td>DEFAULT TRUE</td></tr>
+    <tr><td>creado_en</td><td>TIMESTAMPTZ</td><td>DEFAULT now()</td></tr>
+  </tbody>
+</table></div>
+
+<div class="tbl-title"><span class="num">2</span><h3>categorias</h3></div>
+<div class="table-wrap"><table>
+  <thead><tr><th>Columna</th><th>Tipo</th><th>Reglas</th></tr></thead>
+  <tbody>
+    <tr><td>nombre</td><td>VARCHAR(60)</td><td>NOT NULL, UNIQUE</td></tr>
+    <tr><td>descripcion</td><td>VARCHAR(200)</td><td>opcional</td></tr>
+    <tr><td>activo</td><td>BOOLEAN</td><td>DEFAULT TRUE</td></tr>
+  </tbody>
+</table></div>
+
+<div class="tbl-title"><span class="num">3</span><h3>productos</h3></div>
+<div class="table-wrap"><table>
+  <thead><tr><th>Columna</th><th>Tipo</th><th>Reglas</th></tr></thead>
+  <tbody>
+    <tr><td>codigo</td><td>VARCHAR(50)</td><td>NOT NULL, UNIQUE (código de barras o interno)</td></tr>
+    <tr><td>nombre</td><td>VARCHAR(120)</td><td>NOT NULL, con índice para búsqueda</td></tr>
+    <tr><td>descripcion</td><td>VARCHAR(255)</td><td>opcional</td></tr>
+    <tr><td>categoria_id</td><td>BIGINT</td><td>FK → categorias(id), NOT NULL</td></tr>
+    <tr><td>precio_venta</td><td>NUMERIC(10,2)</td><td>NOT NULL, CHECK ≥ 0 (IVA incluido)</td></tr>
+    <tr><td>costo</td><td>NUMERIC(10,2)</td><td>NOT NULL, CHECK ≥ 0</td></tr>
+    <tr><td>tasa_iva</td><td>NUMERIC(5,4)</td><td>DEFAULT 0.16, CHECK ≥ 0 (0 para alimentos básicos)</td></tr>
+    <tr><td>existencia</td><td>NUMERIC(10,3)</td><td>DEFAULT 0, CHECK ≥ 0</td></tr>
+    <tr><td>stock_minimo</td><td>NUMERIC(10,3)</td><td>DEFAULT 5, CHECK ≥ 0</td></tr>
+    <tr><td>unidad</td><td>VARCHAR(10)</td><td>CHECK IN ('pieza','kg','litro')</td></tr>
+    <tr><td>activo</td><td>BOOLEAN</td><td>DEFAULT TRUE</td></tr>
+    <tr><td>creado_en / actualizado_en</td><td>TIMESTAMPTZ</td><td>DEFAULT now()</td></tr>
+  </tbody>
+</table></div>
+
+<div class="tbl-title"><span class="num">4</span><h3>proveedores</h3></div>
+<div class="table-wrap"><table>
+  <thead><tr><th>Columna</th><th>Tipo</th><th>Reglas</th></tr></thead>
+  <tbody>
+    <tr><td>nombre</td><td>VARCHAR(120)</td><td>NOT NULL</td></tr>
+    <tr><td>telefono</td><td>VARCHAR(20)</td><td>opcional</td></tr>
+    <tr><td>correo</td><td>VARCHAR(120)</td><td>opcional</td></tr>
+    <tr><td>direccion</td><td>VARCHAR(255)</td><td>opcional</td></tr>
+    <tr><td>activo</td><td>BOOLEAN</td><td>DEFAULT TRUE</td></tr>
+  </tbody>
+</table></div>
+
+<div class="tbl-title"><span class="num">5</span><h3>ventas</h3></div>
+<div class="table-wrap"><table>
+  <thead><tr><th>Columna</th><th>Tipo</th><th>Reglas</th></tr></thead>
+  <tbody>
+    <tr><td>folio</td><td>VARCHAR(20)</td><td>NOT NULL, UNIQUE (ej. V-000001, por secuencia)</td></tr>
+    <tr><td>usuario_id</td><td>BIGINT</td><td>FK → usuarios(id), cajero que vendió</td></tr>
+    <tr><td>fecha</td><td>TIMESTAMPTZ</td><td>DEFAULT now(), con índice</td></tr>
+    <tr><td>subtotal</td><td>NUMERIC(10,2)</td><td>CHECK ≥ 0</td></tr>
+    <tr><td>descuento</td><td>NUMERIC(10,2)</td><td>DEFAULT 0, CHECK ≥ 0</td></tr>
+    <tr><td>impuestos</td><td>NUMERIC(10,2)</td><td>CHECK ≥ 0</td></tr>
+    <tr><td>total</td><td>NUMERIC(10,2)</td><td>CHECK ≥ 0</td></tr>
+    <tr><td>metodo_pago</td><td>VARCHAR(20)</td><td>CHECK IN ('efectivo','tarjeta','transferencia','otro')</td></tr>
+    <tr><td>monto_recibido</td><td>NUMERIC(10,2)</td><td>obligatorio si es efectivo, CHECK ≥ total</td></tr>
+    <tr><td>cambio</td><td>NUMERIC(10,2)</td><td>CHECK ≥ 0</td></tr>
+    <tr><td>estado</td><td>VARCHAR(15)</td><td>DEFAULT 'completada', CHECK IN ('completada','cancelada')</td></tr>
+    <tr><td>cancelada_por</td><td>BIGINT</td><td>FK → usuarios(id), NULL si no se canceló</td></tr>
+    <tr><td>cancelada_en</td><td>TIMESTAMPTZ</td><td>NULL si no se canceló</td></tr>
+    <tr><td>motivo_cancelacion</td><td>VARCHAR(255)</td><td>obligatorio si estado = 'cancelada'</td></tr>
+  </tbody>
+</table></div>
+
+<div class="tbl-title"><span class="num">6</span><h3>detalle_ventas</h3></div>
+<div class="table-wrap"><table>
+  <thead><tr><th>Columna</th><th>Tipo</th><th>Reglas</th></tr></thead>
+  <tbody>
+    <tr><td>venta_id</td><td>BIGINT</td><td>FK → ventas(id), NOT NULL</td></tr>
+    <tr><td>producto_id</td><td>BIGINT</td><td>FK → productos(id), NOT NULL</td></tr>
+    <tr><td>cantidad</td><td>NUMERIC(10,3)</td><td>CHECK &gt; 0</td></tr>
+    <tr><td>precio_unitario</td><td>NUMERIC(10,2)</td><td>copia del precio al momento de la venta</td></tr>
+    <tr><td>tasa_iva</td><td>NUMERIC(5,4)</td><td>copia de la tasa al momento de la venta</td></tr>
+    <tr><td>importe</td><td>NUMERIC(10,2)</td><td>cantidad × precio_unitario</td></tr>
+  </tbody>
+</table></div>
+<p class="note">UNIQUE (venta_id, producto_id): si se escanea el mismo producto dos veces, se suma la cantidad en vez de crear otra partida.</p>
+
+<div class="tbl-title"><span class="num">7</span><h3>compras</h3></div>
+<div class="table-wrap"><table>
+  <thead><tr><th>Columna</th><th>Tipo</th><th>Reglas</th></tr></thead>
+  <tbody>
+    <tr><td>folio</td><td>VARCHAR(20)</td><td>NOT NULL, UNIQUE (ej. C-000001)</td></tr>
+    <tr><td>proveedor_id</td><td>BIGINT</td><td>FK → proveedores(id), NOT NULL</td></tr>
+    <tr><td>usuario_id</td><td>BIGINT</td><td>FK → usuarios(id), quien registró</td></tr>
+    <tr><td>fecha</td><td>TIMESTAMPTZ</td><td>DEFAULT now()</td></tr>
+    <tr><td>total</td><td>NUMERIC(10,2)</td><td>CHECK ≥ 0</td></tr>
+    <tr><td>estado</td><td>VARCHAR(15)</td><td>DEFAULT 'confirmada', CHECK IN ('confirmada','cancelada')</td></tr>
+    <tr><td>notas</td><td>VARCHAR(255)</td><td>opcional (núm. de factura del proveedor, etc.)</td></tr>
+  </tbody>
+</table></div>
+
+<div class="tbl-title"><span class="num">8</span><h3>detalle_compras</h3></div>
+<div class="table-wrap"><table>
+  <thead><tr><th>Columna</th><th>Tipo</th><th>Reglas</th></tr></thead>
+  <tbody>
+    <tr><td>compra_id</td><td>BIGINT</td><td>FK → compras(id), NOT NULL</td></tr>
+    <tr><td>producto_id</td><td>BIGINT</td><td>FK → productos(id), NOT NULL</td></tr>
+    <tr><td>cantidad</td><td>NUMERIC(10,3)</td><td>CHECK &gt; 0</td></tr>
+    <tr><td>costo_unitario</td><td>NUMERIC(10,2)</td><td>CHECK ≥ 0</td></tr>
+    <tr><td>importe</td><td>NUMERIC(10,2)</td><td>cantidad × costo_unitario</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="relaciones">5. Relaciones</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th>Relación</th><th>Tipo</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td>categorias → productos</td><td>1 : N</td><td>Una categoría agrupa muchos productos.</td></tr>
+    <tr><td>usuarios → ventas</td><td>1 : N</td><td>Un cajero realiza muchas ventas (y un admin puede cancelarlas).</td></tr>
+    <tr><td>ventas → detalle_ventas</td><td>1 : N</td><td>Una venta tiene una o más partidas.</td></tr>
+    <tr><td>productos → detalle_ventas</td><td>1 : N</td><td>Un producto aparece en muchas ventas.</td></tr>
+    <tr><td>proveedores → compras</td><td>1 : N</td><td>Un proveedor surte muchas compras.</td></tr>
+    <tr><td>usuarios → compras</td><td>1 : N</td><td>Quién registró la compra.</td></tr>
+    <tr><td>compras → detalle_compras</td><td>1 : N</td><td>Una compra tiene una o más partidas.</td></tr>
+    <tr><td>productos → detalle_compras</td><td>1 : N</td><td>Un producto se compra muchas veces.</td></tr>
+  </tbody>
+</table></div>
+<p class="note">ventas ↔ productos y compras ↔ productos son relaciones N : M resueltas por las tablas de detalle.</p>
+
+<h2 id="reglas">6. Reglas de base de datos</h2>
+<ul class="rules">
+  <li><strong>Venta atómica:</strong> en una sola transacción (<code>BEGIN … COMMIT</code>): insertar en <code>ventas</code>, insertar partidas en <code>detalle_ventas</code> y restar <code>productos.existencia</code>. Si cualquier paso falla, <code>ROLLBACK</code>.</li>
+  <li><strong>Sin sobreventa:</strong> descontar con <code>UPDATE productos SET existencia = existencia - $cant WHERE id = $id AND existencia &gt;= $cant</code>; si no afecta una fila, cancelar la transacción. El <code>CHECK (existencia &gt;= 0)</code> es la segunda barrera.</li>
+  <li><strong>Compra atómica:</strong> igual que la venta, pero sumando existencia (y opcionalmente actualizando <code>productos.costo</code>).</li>
+  <li><strong>Cancelación:</strong> nunca borrar. Cambiar <code>estado</code> a 'cancelada', llenar quién/cuándo/motivo y regresar existencias, todo en una transacción, y solo si el estado actual es 'completada' (así se repone una sola vez).</li>
+  <li><strong>Nada se elimina</strong> si tiene historial: <code>ON DELETE RESTRICT</code> en todas las llaves foráneas y uso de <code>activo = FALSE</code>.</li>
+  <li><strong>Precios congelados:</strong> las partidas guardan precio y tasa del momento; cambiar el precio de un producto no altera ventas pasadas.</li>
+  <li><strong>Permisos:</strong> validar el rol en el backend en cada operación; el cajero no crea usuarios, no edita productos, no registra compras ni cancela ventas.</li>
+  <li><strong>Índices:</strong> además de los UNIQUE, crear índices en <code>productos(nombre)</code>, <code>ventas(fecha)</code> y en cada llave foránea.</li>
+</ul>
+
+<h2 id="pasos">7. Pasos de trabajo</h2>
+<ol class="steps">
+  <li>Decidir el backend (lenguaje y si es web o escritorio).</li>
+  <li>Escribir <code>01_esquema.sql</code> con las 8 tablas en este orden (por dependencias): usuarios, categorias, proveedores, productos, ventas, detalle_ventas, compras, detalle_compras.</li>
+  <li>Escribir <code>02_datos_iniciales.sql</code>: un administrador, un cajero, 4–5 categorías, 2 proveedores y ~20 productos de prueba.</li>
+  <li>Instalar PostgreSQL + pgAdmin, crear la base <code>minisuper</code> y ejecutar ambos scripts.</li>
+  <li>Revisar el diagrama en pgAdmin (clic derecho en la base → <em>ERD For Database</em>).</li>
+  <li>Programar el flujo mínimo: login → catálogo de productos → venta con descuento de inventario.</li>
+  <li>Agregar compras, cancelaciones y reportes (ventas por fecha, más vendidos, por método de pago, existencia baja).</li>
+  <li>Probar casos límite: código duplicado, cantidad negativa, producto inactivo, pago insuficiente, stock insuficiente, cancelar dos veces.</li>
+  <li>Documentar instalación, ejecución y respaldo/restauración con <code>pg_dump</code>.</li>
+</ol>
+
+<h2 id="pgadmin">8. Datos a preparar para pgAdmin</h2>
+<p>Cuando instales, la conexión en pgAdmin (<em>Register → Server</em>) se llena con:</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Campo</th><th>Valor sugerido</th></tr></thead>
+  <tbody>
+    <tr><td>Host</td><td>localhost</td></tr>
+    <tr><td>Puerto</td><td>5432</td></tr>
+    <tr><td>Base de datos</td><td>minisuper</td></tr>
+    <tr><td>Usuario (admin)</td><td>postgres — solo para crear la base y el usuario de la app</td></tr>
+    <tr><td>Usuario (app)</td><td>minisuper_app — el que usará el programa</td></tr>
+    <tr><td>Contraseña</td><td>la defines al instalar; guárdala en <code>.env</code>, nunca en el código ni en git</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="fase2">9. Fase 2 (después de las 8 tablas)</h2>
+<div class="callout warn">
+  Estas tablas se dejaron fuera para respetar el límite de 8. El diseño actual permite agregarlas sin rehacer nada:
+  <ul>
+    <li><code>movimientos_inventario</code>: historial completo y ajustes manuales con motivo.</li>
+    <li><code>sesiones_caja</code> + <code>movimientos_caja</code>: apertura, cierre, retiros y diferencias.</li>
+    <li><code>configuracion</code>: datos de la tienda, política de sobreventa, umbral de stock.</li>
+    <li><code>pagos</code>: solo si se necesitan pagos mixtos (parte efectivo, parte tarjeta).</li>
+  </ul>
+</div>
+
+</main>
+</body>
+</html>
