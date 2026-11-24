@@ -1,0 +1,13 @@
+# Configuración para Render (https://render.com). Plan gratuito: el servicio se
+# duerme tras 15 minutos sin visitas y tarda alrededor de un minuto en despertar.
+services:
+  - type: web
+    name: minisuper-demo
+    runtime: node
+    plan: free
+    buildCommand: npm install --include=dev
+    startCommand: npm run demo
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "22"

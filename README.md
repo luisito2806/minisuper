@@ -262,3 +262,13 @@ pg_restore -h localhost -U postgres -d minisuper --clean --if-exists respaldos/m
 - **Sin integración con equipo.** No hay integración con impresoras, lectores ni terminales de pago. El ticket se imprime desde el navegador. Un lector de código de barras que funcione como teclado sí funciona.
 - **Solo en esta computadora.** El acceso es por HTTP en `localhost`. Para usarlo desde otras computadoras se necesita HTTPS o una red de confianza.
 - **`sync({ alter: true })` es cómodo para desarrollar**, como en biblioteca, pero haz un respaldo antes de cambiar un modelo en una base con datos reales.
+
+## Publicar en Render (demo)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/luisito2806/minisuper)
+
+El archivo `render.yaml` publica el **modo demostración** (`npm run demo`): la aplicación completa con PostgreSQL embebido en memoria y datos de prueba, sin necesidad de una base de datos externa. Usuarios: `admin` / `Admin123!` y `cajero` / `Cajero123!`.
+
+Los datos se borran cada vez que el servicio se reinicia o se duerme, así que la demo siempre vuelve a su estado inicial. El plan gratuito se duerme tras 15 minutos sin visitas: la primera visita después tarda alrededor de un minuto en cargar.
+
+Para una tienda real no uses Render: instala el sistema en la computadora de la tienda siguiendo [INSTALACION.md](INSTALACION.md).
