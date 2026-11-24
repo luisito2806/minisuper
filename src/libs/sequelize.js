@@ -12,23 +12,26 @@ let sequelize = null;
 /**
  * Crea la conexión (como en biblioteca: DB_NAME, DB_USER, DB_PASSWORD,
  * DB_HOST, DB_PORT) y registra los modelos. `opciones` permite a las
- * pruebas y al demo usar otra base.
+ * pruebas y al demo usar otra base; con `opciones.url` se conecta a esa
+ * dirección (postgres://…) en lugar de usar las variables DB_*.
  */
 export function conectar(opciones = {}) {
-    sequelize = new Sequelize(
-        process.env.DB_NAME,
-        process.env.DB_USER,
-        process.env.DB_PASSWORD,
-        {
-            host: process.env.DB_HOST,
-            port: process.env.DB_PORT,
-            dialect: 'postgres',
-            logging: false,
-            // Fechas y filtros por día en hora de México.
-            timezone: 'America/Mexico_City',
-            ...opciones
-        }
-    );
+    const { url, ...resto } = opciones;
+    const config = {
+        dialect: 'postgres',
+        logging: false,
+        // Fechas y filtros por día en hora de México.
+        timezone: 'America/Mexico_City',
+        ...resto
+    };
+    sequelize = url
+        ? new Sequelize(url, config)
+        : new Sequelize(
+            process.env.DB_NAME,
+            process.env.DB_USER,
+            process.env.DB_PASSWORD,
+            { host: process.env.DB_HOST, port: process.env.DB_PORT, ...config }
+        );
     setupModels(sequelize);
     return sequelize;
 }

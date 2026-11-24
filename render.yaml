@@ -1,11 +1,11 @@
 # Configuración para Render (https://render.com). Plan gratuito: el servicio se
 # duerme tras 15 minutos sin visitas y tarda alrededor de un minuto en despertar.
 #
-# El plan gratuito tiene 512 MB de memoria. Para que la demo (PostgreSQL embebido
-# en memoria) quepa:
-#   - se arranca con node directamente, sin el proceso extra de npm;
-#   - MALLOC_ARENA_MAX=2 evita que Linux reserve memoria de más por cada hilo;
-#   - la memoria de JavaScript se limita a 160 MB (la demo usa unos 55).
+# La demo usa una base PostgreSQL externa y gratuita (por ejemplo Neon), porque
+# PostgreSQL embebido en memoria no cabe en los 512 MB del plan gratuito.
+# Pega su dirección en DEMO_DATABASE_URL (Render la pide al crear el servicio,
+# o agrégala después en Environment). La base se VACÍA en cada arranque y se
+# llena con los datos de prueba: usa una base solo para la demo.
 services:
   - type: web
     name: minisuper-demo
@@ -17,6 +17,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      - key: DEMO_DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
       - key: MALLOC_ARENA_MAX
         value: "2"
       - key: NODE_OPTIONS

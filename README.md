@@ -267,8 +267,14 @@ pg_restore -h localhost -U postgres -d minisuper --clean --if-exists respaldos/m
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/luisito2806/minisuper)
 
-El archivo `render.yaml` publica el **modo demostración** (`npm run demo`): la aplicación completa con PostgreSQL embebido en memoria y datos de prueba, sin necesidad de una base de datos externa. Usuarios: `admin` / `Admin123!` y `cajero` / `Cajero123!`.
+El archivo `render.yaml` publica el **modo demostración** (`node scripts/demo.js`): la aplicación completa con datos de prueba. Usuarios: `admin` / `Admin123!` y `cajero` / `Cajero123!`.
 
-Los datos se borran cada vez que el servicio se reinicia o se duerme, así que la demo siempre vuelve a su estado inicial. El plan gratuito se duerme tras 15 minutos sin visitas: la primera visita después tarda alrededor de un minuto en cargar.
+En tu computadora la demo usa PostgreSQL embebido en memoria, pero en el plan gratuito de Render (512 MB) no cabe, así que ahí usa una base externa gratuita:
+
+1. Crea una cuenta en [Neon](https://neon.tech) (gratis, sin tarjeta) y un proyecto nuevo.
+2. Copia su *connection string* (`postgresql://…?sslmode=require`).
+3. Pégala en Render como `DEMO_DATABASE_URL`: te la pide al crear el servicio, o agrégala después en el servicio → **Environment**.
+
+Esa base **se vacía en cada arranque** y se llena con los datos de prueba, así que la demo siempre vuelve a su estado inicial. Úsala solo para la demo. El plan gratuito se duerme tras 15 minutos sin visitas: la primera visita después tarda alrededor de un minuto en cargar.
 
 Para una tienda real no uses Render: instala el sistema en la computadora de la tienda siguiendo [INSTALACION.md](INSTALACION.md).
