@@ -1,13 +1,23 @@
 # Configuración para Render (https://render.com). Plan gratuito: el servicio se
 # duerme tras 15 minutos sin visitas y tarda alrededor de un minuto en despertar.
+#
+# El plan gratuito tiene 512 MB de memoria. Para que la demo (PostgreSQL embebido
+# en memoria) quepa:
+#   - se arranca con node directamente, sin el proceso extra de npm;
+#   - MALLOC_ARENA_MAX=2 evita que Linux reserve memoria de más por cada hilo;
+#   - la memoria de JavaScript se limita a 160 MB (la demo usa unos 55).
 services:
   - type: web
     name: minisuper-demo
     runtime: node
     plan: free
     buildCommand: npm install --include=dev
-    startCommand: npm run demo
+    startCommand: node scripts/demo.js
     healthCheckPath: /
     envVars:
       - key: NODE_VERSION
         value: "22"
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=160"
