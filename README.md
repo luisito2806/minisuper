@@ -63,7 +63,19 @@ El script se niega a cargar en una base que ya tenga ventas, para no mezclar dat
 
 ### Publicarla en internet (Render)
 
-*Web Service* con **Build Command** `npm install --include=dev` (PGlite es dependencia de desarrollo) y **Start Command** `npm run demo`. Render pone la variable `PORT`; la demo escucha en `0.0.0.0` y detecta el proxy de Render. En el plan gratuito el servicio se duerme tras unos minutos sin uso: ábrelo un minuto antes de presentar (al despertar vuelve a generar la demo).
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/luisito2806/minisuper)
+
+El archivo `render.yaml` publica el **modo demostración** (`node scripts/demo.js`). En el plan gratuito de Render (512 MB) PostgreSQL en memoria no cabe, así que ahí la demo usa una base externa gratuita:
+
+1. Crea una cuenta en [Neon](https://neon.tech) (gratis, sin tarjeta) y un proyecto nuevo.
+2. Copia su *connection string* (`postgresql://…?sslmode=require`).
+3. Pégala en Render como `DEMO_DATABASE_URL`: te la pide al crear el servicio, o agrégala después en el servicio → **Environment**.
+
+Con base externa, la demo se **regenera cuando cambia el día** (se vacía la base y se cargan las cuatro semanas con fechas hasta hoy); si ya se generó hoy, se reutiliza y el arranque es rápido. Para forzar que vuelva a su estado inicial, pon `DEMO_REINICIAR=true` en **Environment** (y quítalo después). Esa base es solo para la demo: nunca uses la de una tienda real.
+
+El plan gratuito se duerme tras 15 minutos sin visitas: **ábrelo unos minutos antes de presentar**. La primera vez del día tarda más porque genera los datos.
+
+Para una tienda real no uses Render: instala el sistema en la computadora de la tienda siguiendo [INSTALACION.md](INSTALACION.md).
 
 ## Instalación con PostgreSQL y pgAdmin
 

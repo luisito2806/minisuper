@@ -1,0 +1,27 @@
+# Configuración para Render (https://render.com). Plan gratuito: el servicio se
+# duerme tras 15 minutos sin visitas y tarda alrededor de un minuto en despertar.
+#
+# La demo usa una base PostgreSQL externa y gratuita (por ejemplo Neon), porque
+# PostgreSQL embebido en memoria no cabe en los 512 MB del plan gratuito.
+# Pega su dirección en DEMO_DATABASE_URL (Render la pide al crear el servicio,
+# o agrégala después en Environment). La base se VACÍA en cada arranque y se
+# llena con los datos de prueba: usa una base solo para la demo.
+services:
+  - type: web
+    name: minisuper-demo
+    runtime: node
+    plan: free
+    buildCommand: npm install --include=dev
+    startCommand: node scripts/demo.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DEMO_DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=160"
