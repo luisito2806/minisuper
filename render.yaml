@@ -1,11 +1,17 @@
-# Configuración para Render (https://render.com). Plan gratuito: el servicio se
-# duerme tras 15 minutos sin visitas y tarda alrededor de un minuto en despertar.
+# Configuración para Render (https://render.com): dos servicios gratuitos.
 #
-# La demo usa una base PostgreSQL externa y gratuita (por ejemplo Neon), porque
-# PostgreSQL embebido en memoria no cabe en los 512 MB del plan gratuito.
-# Pega su dirección en DEMO_DATABASE_URL (Render la pide al crear el servicio,
-# o agrégala después en Environment). La base se VACÍA en cada arranque y se
-# llena con los datos de prueba: usa una base solo para la demo.
+#   minisuper-demo  La tienda de demostración (node scripts/demo.js).
+#   minisuper-nube  El panel en la nube (carpeta nube/): recibe los datos que
+#                   la demo le manda cada minuto, como lo haría la tienda real.
+#
+# Plan gratuito: cada servicio se duerme tras 15 minutos sin visitas y tarda
+# alrededor de un minuto en despertar.
+#
+# Cada servicio necesita SU PROPIA base PostgreSQL externa y gratuita (por
+# ejemplo, dos bases dentro del mismo proyecto de Neon):
+#   - DEMO_DATABASE_URL (demo): se VACÍA cuando la demo se regenera. Solo para la demo.
+#   - DATABASE_URL (nube): guarda lo que reciben las tiendas. NUNCA la misma que la de la demo.
+# Render pide ambas al crear los servicios (o agrégalas después en Environment).
 services:
   - type: web
     name: minisuper-demo
@@ -25,3 +31,43 @@ services:
         value: "2"
       - key: NODE_OPTIONS
         value: "--max-old-space-size=160"
+      # Envío al panel de la nube. Si Render le da otra dirección al panel
+      # (porque el nombre ya estaba ocupado), cámbiala aquí o en Environment.
+      - key: SYNC_URL
+        value: https://minisuper-nube.onrender.com
+      - key: SYNC_TOKEN
+        fromService:
+          type: web
+          name: minisuper-nube
+          envVarKey: NUBE_DEMO_TOKEN
+
+  - type: web
+    name: minisuper-nube
+    runtime: node
+    plan: free
+    rootDir: nube
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "true"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: URL_PUBLICA
+        value: https://minisuper-nube.onrender.com
+      # Usuario del panel (ve todas las tiendas). La contraseña la escribes tú
+      # al crear el servicio: mínimo 10 caracteres.
+      - key: NUBE_ADMIN_USUARIO
+        value: admin
+      - key: NUBE_ADMIN_CONTRASENA
+        sync: false
+      # Clave de la tienda de demostración; Render la genera y se la pasa a la demo.
+      - key: NUBE_DEMO_TOKEN
+        generateValue: true
+      - key: MALLOC_ARENA_MAX
+        value: "2"

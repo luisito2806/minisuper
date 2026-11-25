@@ -14,11 +14,20 @@
 // reutiliza (arranque rápido); si es de otro día, la base se VACÍA y se vuelve
 // a generar. DEMO_REINICIAR=true fuerza a regenerarla. Nunca la apuntes a la
 // base de una tienda real.
+//
+// Con SYNC_URL y SYNC_TOKEN manda sus datos al panel de la nube cada minuto,
+// como una tienda real. Al regenerar, primero pide a la nube borrar los datos
+// de la demo anterior (solo la tienda de demostración puede hacerlo).
 import crypto from 'node:crypto';
 import { conectar, prepararBaseDeDatos, models, consultar } from '../src/libs/sequelize.js';
 import { cargarDemostracion } from '../src/libs/demostracion.js';
 import { hoyMexico } from '../src/libs/fechas.js';
+import { iniciarSincronizacionAutomatica } from '../src/services/sincronizacion.service.js';
 import { crearApp } from '../src/app.js';
+
+// Identificador fijo de la tienda de demostración: aunque la base se regenere,
+// el panel de la nube la reconoce como la misma tienda.
+const UUID_DEMO = 'd3e30000-0000-4000-8000-00000000de30';
 
 const inicio = Date.now();
 const urlDemo = process.env.DEMO_DATABASE_URL;
@@ -63,6 +72,7 @@ if (reutilizada) {
       direccion: 'Av. Madero 123, Centro',
       telefono: '443 123 4567',
       mensaje_ticket: '¡Gracias por su compra! Datos de demostración.',
+      tienda_uuid: UUID_DEMO,
     },
     { where: { id: 1 } },
   );
@@ -88,3 +98,35 @@ app.listen(PORT, '0.0.0.0', () => {
     ? 'Base externa: se regenera cuando cambia el día (o con DEMO_REINICIAR=true).'
     : 'Los datos están en memoria: se pierden al cerrar.');
 });
+
+/** Conecta la demo con el panel de la nube (si SYNC_URL y SYNC_TOKEN están configurados). */
+async function conectarConNube() {
+  const url = (process.env.SYNC_URL ?? '').replace(/\/+$/, '');
+  const token = process.env.SYNC_TOKEN;
+  if (!url || !token) return;
+  if (!reutilizada) {
+    // La nube puede estar dormida (plan gratuito): se reintenta unos minutos.
+    for (let intento = 1; intento <= 8; intento++) {
+      try {
+        const r = await fetch(`${url}/api/sync/reiniciar-demo`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: '{}',
+          signal: AbortSignal.timeout(90000),
+        });
+        if (r.ok) {
+          console.log('Panel de la nube: se borraron los datos de la demo anterior.');
+          break;
+        }
+        console.error(`Panel de la nube: no aceptó el reinicio (error ${r.status}).`);
+        if (r.status === 401 || r.status === 403) break; // clave equivocada: reintentar no sirve
+      } catch (error) {
+        console.error(`Panel de la nube sin respuesta (intento ${intento}): ${error.cause?.code ?? error.name}`);
+      }
+      await new Promise((ok) => setTimeout(ok, 30000));
+    }
+  }
+  if (iniciarSincronizacionAutomatica()) console.log(`Enviando los datos al panel de la nube (${url}) cada minuto.`);
+}
+
+conectarConNube().catch((error) => console.error('Panel de la nube:', error.message));

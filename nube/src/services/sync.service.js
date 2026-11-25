@@ -36,6 +36,23 @@ async function sinLasMasViejas(modelo, tiendaId, filas, generado, transaction) {
 class syncService {
     constructor() {}
 
+    /**
+     * Borra todo lo recibido de una tienda (ventas, productos, trabajadores,
+     * cortes) y la desvincula de su base. Solo se usa con la tienda de
+     * demostración, que se regenera cada día (el controlador lo valida).
+     */
+    async reiniciar(tienda) {
+        return obtenerSequelize().transaction(async (transaction) => {
+            const borrados = {};
+            for (const [nombre, modelo] of [['ventas', models.Ventas], ['productos', models.Productos],
+                ['trabajadores', models.Trabajadores], ['cajas', models.Cajas]]) {
+                borrados[nombre] = await modelo.destroy({ where: { tienda_id: tienda.id }, transaction });
+            }
+            await tienda.update({ uuid_local: null, ultima_sync: null }, { transaction });
+            return borrados;
+        });
+    }
+
     /** Tienda a la que pertenece una clave (token) de sincronización. */
     async tiendaPorToken(token) {
         if (!token) return null;

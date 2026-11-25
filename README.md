@@ -65,17 +65,27 @@ El script se niega a cargar en una base que ya tenga ventas, para no mezclar dat
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/luisito2806/minisuper)
 
-El archivo `render.yaml` publica el **modo demostración** (`node scripts/demo.js`). En el plan gratuito de Render (512 MB) PostgreSQL en memoria no cabe, así que ahí la demo usa una base externa gratuita:
+El archivo `render.yaml` publica **dos servicios gratuitos**:
 
-1. Crea una cuenta en [Neon](https://neon.tech) (gratis, sin tarjeta) y un proyecto nuevo.
-2. Copia su *connection string* (`postgresql://…?sslmode=require`).
-3. Pégala en Render como `DEMO_DATABASE_URL`: te la pide al crear el servicio, o agrégala después en el servicio → **Environment**.
+| Servicio | Qué es |
+|---|---|
+| `minisuper-demo` | La tienda de demostración (`node scripts/demo.js`) |
+| `minisuper-nube` | El panel en la nube (carpeta `nube/`). La demo le manda sus datos cada minuto, como lo haría la tienda real |
 
-Con base externa, la demo se **regenera cuando cambia el día** (se vacía la base y se cargan las cuatro semanas con fechas hasta hoy); si ya se generó hoy, se reutiliza y el arranque es rápido. Para forzar que vuelva a su estado inicial, pon `DEMO_REINICIAR=true` en **Environment** (y quítalo después). Esa base es solo para la demo: nunca uses la de una tienda real.
+En el plan gratuito (512 MB) PostgreSQL en memoria no cabe, así que cada servicio usa **su propia base** externa y gratuita. En [Neon](https://neon.tech) (gratis, sin tarjeta) basta un proyecto con dos bases:
 
-El plan gratuito se duerme tras 15 minutos sin visitas: **ábrelo unos minutos antes de presentar**. La primera vez del día tarda más porque genera los datos.
+1. En tu proyecto de Neon: **Databases → New database**, por ejemplo `nube`. Copia el *connection string* de cada base (`postgresql://…?sslmode=require`), eligiendo la base en el selector de *Connect*.
+2. En Render: **New → Blueprint** y elige este repositorio (o, si ya lo tienes como Blueprint, **Sync**). Te pide:
+   - `DEMO_DATABASE_URL` (demo): la base de la demo. **Se vacía** cuando la demo se regenera.
+   - `DATABASE_URL` (nube): la otra base. **Nunca la misma que la de la demo.**
+   - `NUBE_ADMIN_CONTRASENA` (nube): la contraseña del usuario `admin` del panel (mínimo 10 caracteres).
+3. La clave con la que la demo manda sus datos (`NUBE_DEMO_TOKEN` → `SYNC_TOKEN`) la genera Render solo. Si Render le da al panel otra dirección que no sea `https://minisuper-nube.onrender.com` (porque el nombre ya estaba ocupado), corrige `SYNC_URL` en la demo y `URL_PUBLICA` en el panel (**Environment**).
 
-Para una tienda real no uses Render: instala el sistema en la computadora de la tienda siguiendo [INSTALACION.md](INSTALACION.md).
+Con base externa, la demo se **regenera cuando cambia el día** (cuatro semanas con fechas hasta hoy) y le pide al panel borrar los datos de la demo anterior; si ya se generó hoy, se reutiliza y arranca rápido. `DEMO_REINICIAR=true` en **Environment** fuerza a regenerarla (quítalo después). Solo la tienda de demostración puede pedirle al panel que borre sus datos; una tienda real, nunca.
+
+Ambos servicios se duermen tras 15 minutos sin visitas. Antes de presentar, **abre primero la demo** (genera y manda los datos) y unos minutos después **el panel** (entra con `admin` y la contraseña que pusiste; cambia el periodo para ver más que el día de hoy).
+
+Para una tienda real no uses Render para la tienda: instálala en su computadora siguiendo [INSTALACION.md](INSTALACION.md). El panel `nube/` sí puede publicarse para ver la tienda real.
 
 ## Instalación con PostgreSQL y pgAdmin
 

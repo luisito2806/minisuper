@@ -6,5 +6,6 @@ const router = express.Router();
 
 // La tienda se identifica con su clave, no con sesión.
 router.post('/', claveTienda, syncController.create);
+router.post('/reiniciar-demo', claveTienda, syncController.reiniciarDemo);
 
 export default router;

@@ -13,6 +13,7 @@ import sincronizacionService from '../src/services/sincronizacion.service.js';
 import { conectar as conectarNube, prepararBase, models as modelosNube } from '../nube/src/libs/sequelize.js';
 import { crearApp as crearNube } from '../nube/src/app.js';
 import { hashToken } from '../nube/src/services/sync.service.js';
+import { asegurarInicial } from '../nube/src/libs/inicial.js';
 
 const TOKEN = 'clave-de-prueba-de-la-tienda-0123456789abcdef';
 let tienda;
@@ -308,5 +309,51 @@ describe('sincronización por USB', () => {
     assert.equal(r.status, 200);
     assert.ok(Array.isArray(r.datos.direcciones));
     assert.equal((await admin.post('/api/sincronizacion/usb', { unidad: '../x' })).status, 400);
+  });
+});
+
+describe('panel publicado (Render)', () => {
+  test('crea el usuario y la tienda de demostración desde variables, y solo la demo puede borrar sus datos', async () => {
+    Object.assign(process.env, {
+      NUBE_ADMIN_USUARIO: 'Profe', NUBE_ADMIN_CONTRASENA: 'Contrasena-Larga-1', NUBE_DEMO_TOKEN: 'clave-demo-0123456789abcdef',
+    });
+    try {
+      await asegurarInicial();
+      await asegurarInicial(); // un segundo arranque no duplica nada
+      const demos = await modelosNube.Tiendas.findAll({ where: { token_hash: hashToken(process.env.NUBE_DEMO_TOKEN) } });
+      assert.equal(demos.length, 1);
+      const demo = demos[0];
+
+      const profe = clienteNube();
+      assert.equal((await profe.post('/api/auth/login', { usuario: 'profe', contrasena: 'Contrasena-Larga-1' })).status, 200);
+      const ids = (await profe.get('/api/tiendas')).datos.map((t) => t.id);
+      assert.ok(ids.includes(demo.id) && ids.includes(1)); // ve todas
+
+      const reiniciar = (token) => fetch(`${nubeBase}/api/sync/reiniciar-demo`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{}',
+      });
+      // Una tienda real NO puede borrar su historial.
+      const antes = await modelosNube.Ventas.count({ where: { tienda_id: 1 } });
+      assert.ok(antes > 0);
+      assert.equal((await reiniciar(TOKEN)).status, 403);
+      assert.equal(await modelosNube.Ventas.count({ where: { tienda_id: 1 } }), antes);
+
+      // La de demostración sí (cada vez que se regenera).
+      await modelosNube.Productos.create({
+        tienda_id: demo.id, id_local: 1, codigo: 'X', nombre: 'X', unidad: 'pieza', precio_venta: '1', costo: '1',
+        existencia: '1', stock_minimo: '1', activo: true,
+      });
+      await demo.update({ uuid_local: '00000000-0000-4000-8000-000000000001' });
+      const r = await reiniciar(process.env.NUBE_DEMO_TOKEN);
+      assert.equal(r.status, 200);
+      assert.equal((await r.json()).borrados.productos, 1);
+      assert.equal(await modelosNube.Productos.count({ where: { tienda_id: demo.id } }), 0);
+      assert.equal((await demo.reload()).uuid_local, null);
+      assert.equal(await modelosNube.Ventas.count({ where: { tienda_id: 1 } }), antes); // la real, intacta
+    } finally {
+      delete process.env.NUBE_ADMIN_USUARIO;
+      delete process.env.NUBE_ADMIN_CONTRASENA;
+      delete process.env.NUBE_DEMO_TOKEN;
+    }
   });
 });

@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { crearApp } from './src/app.js';
 import { obtenerSequelize, prepararBase } from './src/libs/sequelize.js';
+import { asegurarInicial } from './src/libs/inicial.js';
 
 dotenv.config({ quiet: true });
 
@@ -19,6 +20,8 @@ try {
     console.log('Connection has been established successfully.');
     // Crea o actualiza las 7 tablas (sync alter, como en biblioteca).
     await prepararBase();
+    // Usuario del panel y tienda de demostración desde variables (Render).
+    await asegurarInicial();
 } catch (error) {
     console.error('Unable to connect to the database:', error.message);
     process.exit(1);
