@@ -31,22 +31,39 @@ Especificación: [MiniSuper-Instrucciones.md](MiniSuper-Instrucciones.md)
 | Host / puerto | localhost:5432 |
 | Base | minisuper |
 
-## Probar sin instalar PostgreSQL
+## Demostración (con datos de ejemplo)
 
 ```bash
 npm install
 npm run demo
-prender tunel cloudflared tunnel --url http://localhost:3000
 ```
 
-Abre http://localhost:3000. El demo usa PostgreSQL embebido en memoria (PGlite) con los mismos modelos; los datos se pierden al cerrar.
+Abre http://localhost:3000. La demo usa PostgreSQL embebido en memoria (PGlite) con los mismos modelos y genera **cuatro semanas de operación** con fechas hasta hoy: unas 330 ventas en efectivo y a crédito (algunas canceladas), cortes de caja con faltantes y sobrantes, ingresos y retiros, compras semanales a proveedores (una cancelada), mermas y un conteo físico, nómina con semanas ya descontadas y la actual pendiente, y algunos productos bajos o agotados. Los datos se pierden al cerrar y se vuelven a generar al arrancar (unos 10 segundos). Con `DEMO_VACIA=true` arranca solo con el catálogo de ejemplo.
 
 | Usuario | Contraseña | Rol |
 |---|---|---|
 | admin | Admin123! | Administrador |
-| cajero | Cajero123! | Cajero |
+| cajero | Cajero123! | Cajero (entre semana) |
+| ana | Cajera123! | Cajero (fines de semana) |
 
-Para vender, primero abre la caja en la sección **Caja** (o desactiva esa opción en **Configuración**).
+La caja del cajero de hoy queda abierta, así que se puede vender en cuanto se entra.
+
+### La misma demostración en PostgreSQL (para verla en pgAdmin)
+
+1. En pgAdmin crea una base vacía, por ejemplo `minisuper_demo`.
+2. Carga los datos (usa la conexión de tu `.env`, cambiando solo la base):
+
+   ```powershell
+   $env:DB_NAME='minisuper_demo'; npm run cargar-demo
+   ```
+
+3. Arranca con esa base: `$env:DB_NAME='minisuper_demo'; npm start`.
+
+El script se niega a cargar en una base que ya tenga ventas, para no mezclar datos de ejemplo con los reales.
+
+### Publicarla en internet (Render)
+
+*Web Service* con **Build Command** `npm install --include=dev` (PGlite es dependencia de desarrollo) y **Start Command** `npm run demo`. Render pone la variable `PORT`; la demo escucha en `0.0.0.0` y detecta el proxy de Render. En el plan gratuito el servicio se duerme tras unos minutos sin uso: ábrelo un minuto antes de presentar (al despertar vuelve a generar la demo).
 
 ## Instalación con PostgreSQL y pgAdmin
 
@@ -98,7 +115,9 @@ src/
   routers/                   Rutas de cada recurso + index.js (routesApi)
   middlewares/               Sesión y permisos por rol
 public/                      Interfaz (HTML, CSS y JavaScript)
-scripts/demo.js              Modo demostración con PGlite
+scripts/demo.js              Modo demostración con PGlite y cuatro semanas de datos de ejemplo
+scripts/cargar-demo.js       Carga esos datos de ejemplo en una base PostgreSQL vacía (pgAdmin)
+src/libs/demostracion.js     Genera la demostración con los mismos servicios de la app
 scripts/instalar-tienda.ps1  Instalación manual en la tienda (con PostgreSQL y Node ya instalados)
 scripts/configurar-equipo.js Lo ejecuta MiniSuper-Setup.exe: base, servicio de PostgreSQL, tarea y .env
 scripts/servidor.cmd         Mantiene el servidor corriendo (lo reinicia si se cae)

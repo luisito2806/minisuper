@@ -71,11 +71,14 @@ try {
 
 if (automatico) iniciarRespaldoAutomatico();
 
-const app = crearApp({ secreto });
+// Publicada en Render (variable RENDER, la pone el servicio): detrás de su
+// proxy HTTPS y escuchando en todas las interfaces, como pide Render.
+const publicada = Boolean(process.env.RENDER);
+const app = crearApp({ secreto, detrasDeProxy: publicada || process.env.DETRAS_DE_PROXY === 'true' });
 
 // Por defecto solo se puede entrar desde esta computadora. Para entrar desde
 // otra (Tailscale o la red local) pon HOST=0.0.0.0 en .env.
-const HOST = process.env.HOST || '127.0.0.1';
+const HOST = process.env.HOST || (publicada ? '0.0.0.0' : '127.0.0.1');
 const PORT = Number(process.env.PORT) || 3000;
 app.listen(PORT, HOST, () => {
   console.log(`Server is running on port ${PORT} → http://localhost:${PORT}`);

@@ -9,9 +9,12 @@ const RAIZ = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLICA = path.join(RAIZ, 'public');
 
 /** Construye la aplicación Express (la conexión a la base ya debe existir). */
-export function crearApp({ secreto }) {
+export function crearApp({ secreto, detrasDeProxy = false }) {
   const app = express();
   app.disable('x-powered-by');
+  // Publicada detrás de un proxy HTTPS (Render): req.ip es la del visitante,
+  // no la del proxy (el bloqueo por intentos fallidos se cuenta por IP).
+  if (detrasDeProxy) app.set('trust proxy', 1);
 
   // Cabeceras de seguridad básicas.
   app.use((_req, res, next) => {
