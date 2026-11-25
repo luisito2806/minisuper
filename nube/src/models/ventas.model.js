@@ -54,5 +54,8 @@ export const VentasSchema = {
     motivo_cancelacion: { allowNull: true, type: DataTypes.STRING(255), field: 'motivo_cancelacion' },
     descontado_en: { allowNull: true, type: DataTypes.DATE, field: 'descontado_en' },
     sesion_caja_id: { allowNull: true, type: DataTypes.INTEGER, field: 'sesion_caja_id' },
-    partidas: { allowNull: false, type: DataTypes.JSONB, defaultValue: [], field: 'partidas' }
+    partidas: { allowNull: false, type: DataTypes.JSONB, defaultValue: [], field: 'partidas' },
+    // Cuándo generó la tienda estos datos. Un paquete más viejo (por
+    // ejemplo, una USB que se cargó tarde) no reemplaza datos más nuevos.
+    generado_en: { allowNull: true, type: DataTypes.DATE, field: 'generado_en' }
 };

@@ -243,7 +243,7 @@ const SECCIONES = {
       });
       try {
         const r = await api('POST', `${base()}/paquete`, { archivo: base64 });
-        $('#resultado').innerHTML = `<span class="estado ok">Listo</span> Se recibieron ${r.recibido.ventas} ventas, ${r.recibido.productos} productos, ${r.recibido.trabajadores} trabajadores y ${r.recibido.cajas} cortes de caja.`;
+        $('#resultado').innerHTML = `<span class="estado ok">Listo</span> Se recibieron ${r.recibido.ventas} ventas, ${r.recibido.productos} productos, ${r.recibido.trabajadores} trabajadores y ${r.recibido.cajas} cortes de caja.${r.recibido.omitidos ? ` ${r.recibido.omitidos} registros no se cambiaron porque la nube ya tenía datos más recientes.` : ''}`;
         await cargarTiendas();
       } catch (err) {
         $('#resultado').innerHTML = `<span class="error-form">${esc(err.message)}</span>`;

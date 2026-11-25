@@ -28,6 +28,38 @@ describe('acceso', () => {
     assert.equal(r1.datos.error, r2.datos.error);
   });
 
+  test('un usuario creado por el administrador debe cambiar su contraseña antes de usar el sistema', async () => {
+    await admin.post('/api/usuarios', { nombre: 'Nuevo', usuario: 'nuevo1', contrasena: 'temporal123', rol: 'cajero' });
+    const c = entorno.cliente();
+    const r = await c.login('nuevo1', 'temporal123');
+    assert.equal(r.datos.usuario.debe_cambiar_contrasena, true);
+    const bloqueada = await c.get('/api/productos');
+    assert.equal(bloqueada.status, 403);
+    assert.match(bloqueada.datos.error, /Cambia tu contraseña/);
+    assert.equal((await c.get('/api/auth/yo')).datos.usuario.debe_cambiar_contrasena, true);
+    // La nueva no puede ser igual a la actual.
+    assert.equal((await c.post('/api/auth/cambiar-contrasena', { actual: 'temporal123', nueva: 'temporal123' })).status, 400);
+    assert.equal((await c.post('/api/auth/cambiar-contrasena', { actual: 'temporal123', nueva: 'mi-clave-propia' })).status, 200);
+    assert.equal((await c.get('/api/productos')).status, 200);
+
+    // Si el administrador le pone otra contraseña, se le vuelve a pedir cambiarla.
+    const { rows } = await entorno.db.query("SELECT id FROM usuarios WHERE usuario = 'nuevo1'");
+    await admin.put(`/api/usuarios/${rows[0].id}`, { nombre: 'Nuevo', rol: 'cajero', activo: true, contrasena: 'otra-temporal' });
+    assert.equal((await c.get('/api/productos')).status, 403);
+  });
+
+  test('después de 5 intentos fallidos se bloquea el usuario 5 minutos', async () => {
+    await admin.post('/api/usuarios', { nombre: 'Bloqueo', usuario: 'bloqueo1', contrasena: 'correcta123', rol: 'cajero' });
+    const c = entorno.cliente();
+    for (let i = 0; i < 5; i++) {
+      assert.equal((await c.post('/api/auth/login', { usuario: 'bloqueo1', contrasena: 'mala' })).status, 401);
+    }
+    const r = await c.post('/api/auth/login', { usuario: 'Bloqueo1', contrasena: 'correcta123' });
+    assert.equal(r.status, 429);
+    // Otros usuarios no se ven afectados.
+    assert.equal((await entorno.cliente().post('/api/auth/login', { usuario: 'cajero', contrasena: 'Cajero123!' })).status, 200);
+  });
+
   test('sin sesión no se puede usar la API', async () => {
     const r = await entorno.cliente().get('/api/productos');
     assert.equal(r.status, 401);
@@ -65,7 +97,7 @@ describe('acceso', () => {
     });
     assert.equal(nuevo.status, 201);
     const c = entorno.cliente();
-    await c.login('temporal', 'temporal123');
+    await c.entrarNuevo('temporal', 'temporal123');
     assert.equal((await c.get('/api/productos')).status, 200);
     await admin.put(`/api/usuarios/${nuevo.datos.id}`, { nombre: 'Temporal', rol: 'cajero', activo: false });
     assert.equal((await c.get('/api/productos')).status, 401);

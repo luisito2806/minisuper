@@ -42,5 +42,8 @@ export const CajasSchema = {
     ventas_credito: dinero('ventas_credito'),
     num_ventas: { allowNull: false, type: DataTypes.INTEGER, defaultValue: 0, field: 'num_ventas' },
     ingresos: dinero('ingresos'),
-    retiros: dinero('retiros')
+    retiros: dinero('retiros'),
+    // Cuándo generó la tienda estos datos. Un paquete más viejo (por
+    // ejemplo, una USB que se cargó tarde) no reemplaza datos más nuevos.
+    generado_en: { allowNull: true, type: DataTypes.DATE, field: 'generado_en' }
 };

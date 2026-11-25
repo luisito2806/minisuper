@@ -5,16 +5,16 @@ Aplicación web para administrar un mini súper: punto de venta (efectivo y cré
 Está hecha con **Node.js + Express + Sequelize + PostgreSQL** (administrable con pgAdmin) + exceljs y sigue la misma estructura que el proyecto guía `biblioteca`:
 
 - Cada tabla es un **modelo de Sequelize**.
-- Las tablas se crean solas al arrancar el servidor (`sequelize.sync({ alter: true })`).
+- Las tablas se crean solas al arrancar el servidor (`sequelize.sync({ alter: true })`). En los arranques siguientes solo se vuelven a revisar si cambió algún modelo, y antes se hace un respaldo.
 - La API está organizada en **routers → controllers → services**.
 
 Especificación: [MiniSuper-Instrucciones.md](MiniSuper-Instrucciones.md)
 
-**Instalar en la tienda y ver la tienda desde la ciudad (USB, Tailscale y panel en la nube): [INSTALACION.md](INSTALACION.md).**
+**Instalar en la tienda y ver la tienda desde la ciudad (USB, Tailscale y panel en la nube): [INSTALACION.md](INSTALACION.md).** Para la tienda hay un instalador (`MiniSuper-Setup.exe`) que trae PostgreSQL y Node adentro y no necesita internet.
 
 ## Contraseñas (entorno local)
 
-**Usuarios de la aplicación** (se crean solos la primera vez que arranca; cámbialas en *Mi cuenta*):
+**Usuarios de la aplicación** (se crean solos la primera vez que arranca; **el sistema pide cambiar la contraseña la primera vez que entras**):
 
 | Usuario | Contraseña | Rol |
 |---|---|---|
@@ -59,8 +59,11 @@ Para vender, primero abre la caja en la sección **Caja** (o desactiva esa opci�
    | `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, `DB_NAME` | Los mismos datos con los que te conectas en pgAdmin |
    | `SESSION_SECRET` | Cadena aleatoria de 32 caracteres o más |
    | `DATOS_DE_PRUEBA` | `true` carga 20 productos y 3 trabajadores de ejemplo la primera vez; `false` para una tienda real |
-| `RESPALDO_AUTOMATICO` | Opcional. `false` desactiva el respaldo diario automático |
-| `PG_DUMP` | Opcional. Ruta de `pg_dump` si no se encuentra sola (en Windows se busca en `C:\Program Files\PostgreSQL\<versión>\bin`) |
+   | `HOST` | `127.0.0.1` (predeterminado): solo se entra desde esta computadora. `0.0.0.0`: también desde otras (Tailscale o red local) |
+   | `RESPALDO_AUTOMATICO` | Opcional. `false` desactiva el respaldo diario automático |
+   | `PG_DUMP` | Opcional. Ruta de `pg_dump` si no se encuentra sola (en Windows se busca en `C:\Program Files\PostgreSQL\<versión>\bin`) |
+   | `ACTUALIZAR_ESQUEMA` | Opcional. `true` fuerza revisar las tablas con `sync({ alter: true })` aunque los modelos no hayan cambiado |
+   | `ACTUALIZAR_SIN_RESPALDO` | Opcional y riesgoso. `true` actualiza las tablas aunque falle el respaldo previo |
 
 4. Ejecuta:
 
@@ -72,7 +75,7 @@ Para vender, primero abre la caja en la sección **Caja** (o desactiva esa opci�
    ```
 
    Al arrancar, la aplicación hace el respaldo del día y después crea o actualiza las 14 tablas, sus relaciones y restricciones, la configuración y los usuarios iniciales. En pgAdmin aparecen en `minisuper` → **Schemas** → **public** → **Tables** (presiona F5 para actualizar).
-5. Entra a http://localhost:3000, **cambia las contraseñas iniciales** en *Mi cuenta* y llena los datos de la tienda en **Configuración**.
+5. Entra a http://localhost:3000. La primera vez el sistema te pide **cambiar la contraseña inicial** (lo mismo con `cajero`). Luego llena los datos de la tienda en **Configuración**.
 
 Para ver el diagrama entidad-relación en pgAdmin: clic derecho en la base `minisuper` → **ERD For Database**.
 
@@ -96,7 +99,12 @@ src/
   middlewares/               Sesión y permisos por rol
 public/                      Interfaz (HTML, CSS y JavaScript)
 scripts/demo.js              Modo demostración con PGlite
-scripts/instalar-tienda.ps1  Instalador para la computadora de la tienda (Windows)
+scripts/instalar-tienda.ps1  Instalación manual en la tienda (con PostgreSQL y Node ya instalados)
+scripts/configurar-equipo.js Lo ejecuta MiniSuper-Setup.exe: base, servicio de PostgreSQL, tarea y .env
+scripts/servidor.cmd         Mantiene el servidor corriendo (lo reinicia si se cae)
+scripts/abrir.vbs            Icono del escritorio: espera al servidor y abre la app en Edge
+instalador/empaquetar.ps1    Arma MiniSuper-Setup.exe (Node + PostgreSQL + app, sin internet en la tienda)
+instalador/MiniSuper.iss     Script de Inno Setup del instalador
 nube/                        Panel en la nube (aplicación aparte, solo consulta)
 test/                        Pruebas automáticas
 ```
@@ -132,6 +140,8 @@ Es el mismo procedimiento que en biblioteca:
 
 ## Tablas
 
+La base `minisuper` lleva **14 tablas**. Todas se crean solas desde los modelos de [src/models/](src/models/) al arrancar el servidor.
+
 | # | Modelo | Tabla | Para qué sirve |
 |---|---|---|---|
 | 1 | `Usuarios` | `usuarios` | Acceso y roles (administrador, cajero) |
@@ -148,6 +158,251 @@ Es el mismo procedimiento que en biblioteca:
 | 12 | `MovimientosInventario` | `movimientos_inventario` | Historial de cada cambio de existencia |
 | 13 | `Trabajadores` | `trabajadores` | Quién compra a crédito (se le descuenta en nómina) |
 | 14 | `SyncPendientes` | `sync_pendientes` | Cambios por enviar a la nube (la llenan disparadores de PostgreSQL) |
+
+### Columnas de cada tabla
+
+Notación: **PK** = llave primaria (entero autoincremental), **FK →** = llave foránea, **único** = índice único. *Fecha y hora* es `TIMESTAMP WITH TIME ZONE`. Toda columna es obligatoria (`NOT NULL`) salvo que diga *opcional*.
+
+#### 1. `usuarios`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | INTEGER | PK |
+| `nombre` | VARCHAR(100) | |
+| `usuario` | VARCHAR(50) | único |
+| `contrasena_hash` | VARCHAR(255) | Contraseña cifrada |
+| `rol` | VARCHAR(20) | `administrador` o `cajero` |
+| `activo` | BOOLEAN | Predeterminado `true` |
+| `debe_cambiar_contrasena` | BOOLEAN | Predeterminado `false`. `true` = al entrar debe poner su propia contraseña (usuarios iniciales y contraseñas puestas por el administrador) |
+| `creado_en` | Fecha y hora | Automático |
+
+#### 2. `categorias`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | INTEGER | PK |
+| `nombre` | VARCHAR(60) | único |
+| `descripcion` | VARCHAR(200) | opcional |
+| `activo` | BOOLEAN | Predeterminado `true` |
+
+#### 3. `productos`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | INTEGER | PK |
+| `codigo` | VARCHAR(50) | único (código de barras o clave) |
+| `nombre` | VARCHAR(120) | |
+| `descripcion` | VARCHAR(255) | opcional |
+| `categoria_id` | INTEGER | FK → `categorias.id` |
+| `proveedor_id` | INTEGER | FK → `proveedores.id`, opcional |
+| `precio_venta` | DECIMAL(10,2) | |
+| `costo` | DECIMAL(10,2) | |
+| `tasa_iva` | DECIMAL(5,4) | Predeterminado `0.16` |
+| `existencia` | DECIMAL(10,3) | Predeterminado `0` |
+| `stock_minimo` | DECIMAL(10,3) | Predeterminado `5` |
+| `unidad` | VARCHAR(10) | `pieza`, `kg` o `litro`; predeterminado `pieza` |
+| `activo` | BOOLEAN | Predeterminado `true` |
+| `creado_en`, `actualizado_en` | Fecha y hora | Automáticos |
+
+#### 4. `proveedores`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | INTEGER | PK |
+| `nombre` | VARCHAR(120) | |
+| `telefono` | VARCHAR(20) | opcional |
+| `correo` | VARCHAR(120) | opcional |
+| `direccion` | VARCHAR(255) | opcional |
+| `activo` | BOOLEAN | Predeterminado `true` |
+
+#### 5. `ventas`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | INTEGER | PK |
+| `folio` | VARCHAR(20) | único, automático (`V-000001`, secuencia `folio_ventas_seq`) |
+| `usuario_id` | INTEGER | FK → `usuarios.id` (quién vendió) |
+| `sesion_caja_id` | INTEGER | FK → `sesiones_caja.id`, opcional |
+| `fecha` | Fecha y hora | Predeterminado: ahora |
+| `subtotal` | DECIMAL(10,2) | |
+| `descuento` | DECIMAL(10,2) | Predeterminado `0` |
+| `impuestos` | DECIMAL(10,2) | Predeterminado `0` |
+| `total` | DECIMAL(10,2) | |
+| `precios_incluyen_iva` | BOOLEAN | Cómo se calculó el IVA en esa venta |
+| `metodo_pago` | VARCHAR(20) | `efectivo` o `credito` (también acepta los anteriores: `tarjeta`, `transferencia`, `otro`) |
+| `trabajador_id` | INTEGER | FK → `trabajadores.id`; obligatorio solo en ventas a crédito |
+| `descontado_en` | Fecha y hora | opcional; cuándo se descontó en nómina |
+| `descontado_por` | INTEGER | FK → `usuarios.id`, opcional |
+| `monto_recibido` | DECIMAL(10,2) | opcional (efectivo recibido) |
+| `cambio` | DECIMAL(10,2) | Predeterminado `0` |
+| `estado` | VARCHAR(15) | `completada` o `cancelada` |
+| `cancelada_por` | INTEGER | FK → `usuarios.id`, opcional |
+| `cancelada_en` | Fecha y hora | opcional |
+| `motivo_cancelacion` | VARCHAR(255) | opcional |
+
+#### 6. `detalle_ventas`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | INTEGER | PK |
+| `venta_id` | INTEGER | FK → `ventas.id` |
+| `producto_id` | INTEGER | FK → `productos.id` |
+| `cantidad` | DECIMAL(10,3) | |
+| `precio_unitario` | DECIMAL(10,2) | Precio al momento de vender |
+| `tasa_iva` | DECIMAL(5,4) | |
+| `costo_unitario` | DECIMAL(10,2) | opcional; sirve para calcular la utilidad |
+| `importe` | DECIMAL(10,2) | |
+
+Único: (`venta_id`, `producto_id`).
+
+#### 7. `compras`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | INTEGER | PK |
+| `folio` | VARCHAR(20) | único, automático (`C-000001`, secuencia `folio_compras_seq`) |
+| `proveedor_id` | INTEGER | FK → `proveedores.id` |
+| `usuario_id` | INTEGER | FK → `usuarios.id` |
+| `fecha` | Fecha y hora | Predeterminado: ahora |
+| `total` | DECIMAL(10,2) | |
+| `estado` | VARCHAR(15) | `confirmada` o `cancelada` |
+| `notas` | VARCHAR(255) | opcional |
+| `cancelada_por` | INTEGER | FK → `usuarios.id`, opcional |
+| `cancelada_en` | Fecha y hora | opcional |
+| `motivo_cancelacion` | VARCHAR(255) | opcional |
+
+#### 8. `detalle_compras`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | INTEGER | PK |
+| `compra_id` | INTEGER | FK → `compras.id` |
+| `producto_id` | INTEGER | FK → `productos.id` |
+| `cantidad` | DECIMAL(10,3) | |
+| `costo_unitario` | DECIMAL(10,2) | |
+| `importe` | DECIMAL(10,2) | |
+
+Único: (`compra_id`, `producto_id`).
+
+#### 9. `configuracion` (una sola fila, `id = 1`)
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | SMALLINT | PK, siempre `1` |
+| `nombre_tienda` | VARCHAR(120) | Predeterminado `Mi Mini Súper` |
+| `direccion` | VARCHAR(255) | opcional |
+| `telefono` | VARCHAR(30) | opcional |
+| `rfc` | VARCHAR(13) | opcional |
+| `mensaje_ticket` | VARCHAR(255) | opcional; predeterminado `¡Gracias por su compra!` |
+| `ticket_encabezado` | VARCHAR(255) | opcional |
+| `ticket_ancho` | VARCHAR(2) | `58` u `80` (mm); predeterminado `80` |
+| `ticket_mostrar_cajero` | BOOLEAN | Predeterminado `true` |
+| `moneda` | CHAR(3) | Predeterminado `MXN` |
+| `formato_fecha` | VARCHAR(10) | `dd/mm/aaaa` o `aaaa-mm-dd` |
+| `cobrar_iva` | BOOLEAN | Predeterminado `true` |
+| `precios_incluyen_iva` | BOOLEAN | Predeterminado `true` |
+| `tasa_iva_predeterminada` | DECIMAL(5,4) | Predeterminado `0.16` |
+| `metodos_pago` | VARCHAR(20)[] | Predeterminado `{efectivo, credito}` |
+| `stock_minimo_predeterminado` | DECIMAL(10,3) | Predeterminado `5` |
+| `permitir_sobreventa` | BOOLEAN | Predeterminado `false` |
+| `requiere_caja_abierta` | BOOLEAN | Predeterminado `true` |
+| `tienda_uuid` | UUID | Automático; identifica a la tienda ante la nube |
+| `actualizado_por` | INTEGER | FK → `usuarios.id`, opcional |
+| `esquema_huella` | VARCHAR(64) | Uso interno, opcional: huella de los modelos; si cambia, el arranque respalda y actualiza las tablas |
+| `actualizado_en` | Fecha y hora | Automático |
+
+#### 10. `sesiones_caja`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | INTEGER | PK |
+| `usuario_id` | INTEGER | FK → `usuarios.id`; una sola caja abierta por usuario |
+| `abierta_en` | Fecha y hora | Predeterminado: ahora |
+| `fondo_inicial` | DECIMAL(10,2) | |
+| `estado` | VARCHAR(10) | `abierta` o `cerrada` |
+| `cerrada_en` | Fecha y hora | opcional |
+| `cerrada_por` | INTEGER | FK → `usuarios.id`, opcional |
+| `efectivo_esperado` | DECIMAL(10,2) | opcional; se guarda al cerrar |
+| `monto_contado` | DECIMAL(10,2) | opcional |
+| `diferencia` | DECIMAL(10,2) | opcional |
+| `notas_cierre` | VARCHAR(255) | opcional |
+
+#### 11. `movimientos_caja`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | INTEGER | PK |
+| `sesion_caja_id` | INTEGER | FK → `sesiones_caja.id` |
+| `usuario_id` | INTEGER | FK → `usuarios.id` |
+| `fecha` | Fecha y hora | Predeterminado: ahora |
+| `tipo` | VARCHAR(10) | `ingreso` o `retiro` |
+| `monto` | DECIMAL(10,2) | |
+| `motivo` | VARCHAR(255) | |
+
+#### 12. `movimientos_inventario`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | INTEGER | PK |
+| `producto_id` | INTEGER | FK → `productos.id` |
+| `usuario_id` | INTEGER | FK → `usuarios.id` |
+| `fecha` | Fecha y hora | Predeterminado: ahora |
+| `tipo` | VARCHAR(20) | `inicial`, `compra`, `venta`, `cancelacion_venta`, `cancelacion_compra`, `ajuste_entrada`, `ajuste_salida` o `saldo_depurado` |
+| `cantidad` | DECIMAL(10,3) | Positiva si entra, negativa si sale |
+| `existencia_anterior` | DECIMAL(10,3) | |
+| `existencia_nueva` | DECIMAL(10,3) | Siempre `existencia_anterior + cantidad` |
+| `venta_id` | INTEGER | FK → `ventas.id`; solo en movimientos de venta |
+| `compra_id` | INTEGER | FK → `compras.id`; solo en movimientos de compra |
+| `motivo` | VARCHAR(255) | opcional; obligatorio en ajustes |
+
+#### 13. `trabajadores`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | INTEGER | PK |
+| `numero` | VARCHAR(20) | único (número de empleado) |
+| `nombre` | VARCHAR(120) | |
+| `area` | VARCHAR(80) | opcional |
+| `activo` | BOOLEAN | Predeterminado `true` |
+| `creado_en`, `actualizado_en` | Fecha y hora | Automáticos |
+
+#### 14. `sync_pendientes`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | BIGINT | PK |
+| `entidad` | VARCHAR(20) | `venta`, `producto`, `trabajador`, `caja` o `tienda` |
+| `entidad_id` | INTEGER | `id` del registro que cambió |
+| `version` | INTEGER | Predeterminado `1`; sube con cada cambio |
+
+Único: (`entidad`, `entidad_id`).
+
+### Relaciones
+
+```
+categorias    1 ── N  productos
+proveedores   1 ── N  productos, compras
+usuarios      1 ── N  ventas, compras, sesiones_caja, movimientos_caja, movimientos_inventario
+sesiones_caja 1 ── N  ventas, movimientos_caja
+trabajadores  1 ── N  ventas                (solo ventas a crédito)
+ventas        1 ── N  detalle_ventas   N ── 1  productos
+compras       1 ── N  detalle_compras  N ── 1  productos
+productos     1 ── N  movimientos_inventario  (ligado a la venta o compra que lo originó)
+```
+
+### Tablas del panel en la nube
+
+El panel de [nube/](nube/) es otra aplicación, con **su propia base** y 7 tablas. Las tablas con datos de la tienda usan la llave compuesta (`tienda_id`, `id_local`), donde `id_local` es el `id` que el registro tiene en la tienda.
+
+| Tabla | Llave | Columnas |
+|---|---|---|
+| `tiendas` | `id` | `nombre`, `token_hash` (único), `uuid_local` (único, opcional), `direccion`, `ultima_sync`, `creada_en` |
+| `usuarios` | `id` | `usuario` (único), `nombre`, `contrasena_hash`, `todas` (ve todas las tiendas), `activo` |
+| `usuarios_tiendas` | (`usuario_id`, `tienda_id`) | Qué tiendas puede ver cada usuario |
+| `productos` | (`tienda_id`, `id_local`) | `codigo`, `nombre`, `categoria`, `unidad`, `precio_venta`, `costo`, `existencia`, `stock_minimo`, `activo` |
+| `trabajadores` | (`tienda_id`, `id_local`) | `numero`, `nombre`, `area`, `activo` |
+| `ventas` | (`tienda_id`, `id_local`) | `folio`, `fecha`, `cajero`, `metodo_pago`, `trabajador_id`, `trabajador_numero`, `trabajador_nombre`, `subtotal`, `descuento`, `impuestos`, `total`, `costo`, `estado`, `cancelada_en`, `motivo_cancelacion`, `descontado_en`, `sesion_caja_id`, `partidas` (JSONB con los productos) |
+| `cajas` | (`tienda_id`, `id_local`) | `usuario`, `abierta_en`, `cerrada_en`, `estado`, `fondo_inicial`, `efectivo_esperado`, `monto_contado`, `diferencia`, `ventas_efectivo`, `ventas_credito`, `num_ventas`, `ingresos`, `retiros` |
 
 ## IVA
 
@@ -260,5 +515,5 @@ pg_restore -h localhost -U postgres -d minisuper --clean --if-exists respaldos/m
 
 - **Sesiones en memoria.** Las sesiones se guardan en la memoria del servidor: al reiniciarlo hay que volver a iniciar sesión.
 - **Sin integración con equipo.** No hay integración con impresoras, lectores ni terminales de pago. El ticket se imprime desde el navegador. Un lector de código de barras que funcione como teclado sí funciona.
-- **Solo en esta computadora.** El acceso es por HTTP en `localhost`. Para usarlo desde otras computadoras se necesita HTTPS o una red de confianza.
-- **`sync({ alter: true })` es cómodo para desarrollar**, como en biblioteca, pero haz un respaldo antes de cambiar un modelo en una base con datos reales.
+- **Solo en esta computadora.** El servidor escucha en `127.0.0.1` y el acceso es por HTTP. Para usarlo desde otras computadoras pon `HOST=0.0.0.0` y usa una red de confianza (Tailscale), nunca el puerto abierto a internet.
+- **`sync({ alter: true })` en lugar de migraciones.** Es cómodo, como en biblioteca, pero si **renombras** una columna en un modelo, Sequelize borra la vieja y crea una nueva vacía. El arranque hace un respaldo antes de actualizar las tablas; aun así, para renombrar copia los datos a mano o restaura el respaldo.

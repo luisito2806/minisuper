@@ -86,7 +86,10 @@ const copiarUsb = async (req, res) => {
 
 const getRed = async (req, res) => {
     try {
-        res.json(direccionesRed(process.env.PORT || 3000));
+        // Con HOST=127.0.0.1 (lo predeterminado) nadie más puede entrar.
+        const host = process.env.HOST || '127.0.0.1';
+        const enRed = !['127.0.0.1', 'localhost', '::1'].includes(host);
+        res.json({ ...direccionesRed(process.env.PORT || 3000), en_red: enRed });
     } catch (error) {
         manejarError(res, error);
     }

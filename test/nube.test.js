@@ -270,6 +270,31 @@ describe('sincronización por USB', () => {
     await assert.rejects(sync.paquete(), /No hay cambios nuevos/);
   });
 
+  test('una USB que se carga tarde no pisa los datos más nuevos que llegaron por internet', async () => {
+    // Lunes: se vende atún y el paquete se copia a la USB.
+    configurarSincronizacion(null);
+    const atun = await producto(tienda.db, '7501000000059');
+    const v = await cajero.post('/api/ventas', { metodo_pago: 'efectivo', monto_recibido: '100', partidas: [{ producto_id: atun.id, cantidad: '1' }] });
+    const usb = await sync.paquete();
+    await usb.confirmar();
+    await new Promise((ok) => setTimeout(ok, 10));
+
+    // Martes: se cancela la venta y llega a la nube por internet.
+    await admin.post(`/api/ventas/${v.datos.id}/cancelar`, { motivo: 'Devolución' });
+    configurarSincronizacion({ url: nubeBase, token: TOKEN });
+    assert.equal((await admin.post('/api/sincronizacion/ahora', {})).status, 200);
+    configurarSincronizacion(null);
+    assert.equal((await nube.get(`/api/tiendas/1/ventas/${v.datos.id}`)).datos.estado, 'cancelada');
+
+    // Miércoles: en la ciudad se carga la USB del lunes.
+    const r = await nube.post('/api/tiendas/1/paquete', { archivo: usb.archivo.toString('base64') });
+    assert.equal(r.status, 200);
+    assert.ok(r.datos.recibido.omitidos >= 2); // la venta y el atún
+    assert.equal((await nube.get(`/api/tiendas/1/ventas/${v.datos.id}`)).datos.estado, 'cancelada');
+    const [enNube] = (await nube.get('/api/tiendas/1/inventario?q=7501000000059')).datos;
+    assert.equal(Number(enNube.existencia), Number((await producto(tienda.db, '7501000000059')).existencia));
+  });
+
   test('un paquete de otra base de datos se rechaza para no mezclar tiendas', async () => {
     const otro = { formato: 1, tienda: { uuid: '00000000-0000-4000-8000-000000000000', nombre: 'x' }, ventas: [] };
     const archivo = zlib.gzipSync(JSON.stringify(otro)).toString('base64');

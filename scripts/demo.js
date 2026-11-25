@@ -9,6 +9,8 @@ import { crearApp } from '../src/app.js';
 
 await conectarEnMemoria();
 await prepararBaseDeDatos({ datosDePrueba: true });
+// En el demo se entra directo con las contraseñas del README.
+await models.Usuarios.update({ debe_cambiar_contrasena: false }, { where: {} });
 await models.Configuracion.update(
   { nombre_tienda: 'Mini Súper (demo)', direccion: 'Datos en memoria: se borran al cerrar' },
   { where: { id: 1 } },

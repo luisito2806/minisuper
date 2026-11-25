@@ -301,7 +301,7 @@ describe('configuración', () => {
     await configurar({ requiere_caja_abierta: false });
     const otro = entorno.cliente();
     await admin.post('/api/usuarios', { nombre: 'Sin caja', usuario: 'sincaja', contrasena: 'sincaja123', rol: 'cajero' });
-    await otro.login('sincaja', 'sincaja123');
+    await otro.entrarNuevo('sincaja', 'sincaja123');
     const arroz = await producto(entorno.db, '7501000000011');
     const r = await otro.post('/api/ventas', { metodo_pago: 'credito', trabajador_id: '1', partidas: [{ producto_id: arroz.id, cantidad: '1' }] });
     assert.equal(r.status, 201);

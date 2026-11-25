@@ -20,6 +20,8 @@ class usuariosService {
             usuario,
             rol: v.opcion(data.rol, 'rol', ROLES),
             contrasena_hash: await bcrypt.hash(validarContrasena(data.contrasena), 10),
+            // La contraseña la eligió el administrador: el usuario pone la suya al entrar.
+            debe_cambiar_contrasena: true,
         });
         return this.findOne(res.id);
     }
@@ -49,7 +51,10 @@ class usuariosService {
             throw new ErrorApp(400, 'No puedes quitarte el rol de administrador ni desactivar tu propio usuario.');
         }
         const cambios = { nombre: v.texto(data.nombre, 'nombre', { max: 100, requerido: true }), rol, activo };
-        if (data.contrasena) cambios.contrasena_hash = await bcrypt.hash(validarContrasena(data.contrasena), 10);
+        if (data.contrasena) {
+            cambios.contrasena_hash = await bcrypt.hash(validarContrasena(data.contrasena), 10);
+            cambios.debe_cambiar_contrasena = String(model.id) !== String(actual.id);
+        }
         await model.update(cambios);
         return this.findOne(id);
     }

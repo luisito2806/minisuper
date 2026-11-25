@@ -5,9 +5,18 @@ import { conectarEnMemoria } from './ayuda-bd.js';
 import { prepararBaseDeDatos } from '../src/libs/sequelize.js';
 import { crearApp } from '../src/app.js';
 
+/**
+ * Los usuarios iniciales deben cambiar su contraseña al entrar; en las
+ * pruebas se les quita esa obligación para poder usar la API de inmediato.
+ */
+export function quitarCambioPendiente(sequelize) {
+  return sequelize.query('UPDATE usuarios SET debe_cambiar_contrasena = false');
+}
+
 export async function levantar() {
   const { sequelize, pglite } = await conectarEnMemoria();
   await prepararBaseDeDatos({ datosDePrueba: true });
+  await quitarCambioPendiente(sequelize);
   const app = crearApp({ secreto: 'secreto-de-pruebas-de-al-menos-32-caracteres' });
   const servidor = await new Promise((ok) => {
     const s = app.listen(0, () => ok(s));
@@ -65,6 +74,12 @@ function crearCliente(base) {
       const r = await pedir('POST', '/api/auth/login', { usuario, contrasena });
       if (r.status !== 200) throw new Error(`login falló: ${JSON.stringify(r.datos)}`);
       return r;
+    },
+    /** Usuario recién creado por el administrador: entra y pone su propia contraseña. */
+    async entrarNuevo(usuario, contrasena) {
+      await this.login(usuario, contrasena);
+      const r = await pedir('POST', '/api/auth/cambiar-contrasena', { actual: contrasena, nueva: `${contrasena}-propia` });
+      if (r.status !== 200) throw new Error(`cambio de contraseña falló: ${JSON.stringify(r.datos)}`);
     },
   };
 }

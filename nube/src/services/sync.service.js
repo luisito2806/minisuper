@@ -6,6 +6,7 @@
  * conserva aquí como historial.
  */
 import crypto from 'node:crypto';
+import { Op } from 'sequelize';
 import { models, obtenerSequelize } from '../libs/sequelize.js';
 import { ErrorNube } from '../libs/errores.js';
 
@@ -15,6 +16,22 @@ const lista = (x) => (Array.isArray(x) ? x : []);
 
 /** Campos que se actualizan si el registro ya existía (todos menos la llave). */
 const camposDe = (modelo) => Object.keys(modelo.getAttributes()).filter((k) => k !== 'tienda_id' && k !== 'id_local');
+
+/**
+ * Quita las filas que la nube ya tiene con datos generados DESPUÉS que este
+ * paquete. Pasa cuando se carga tarde una USB: sus datos son más viejos que
+ * los que ya llegaron por internet y no deben reemplazarlos (por ejemplo,
+ * volver "completada" una venta que después se canceló).
+ */
+async function sinLasMasViejas(modelo, tiendaId, filas, generado, transaction) {
+    const masNuevas = new Set((await modelo.findAll({
+        attributes: ['id_local'],
+        where: { tienda_id: tiendaId, id_local: filas.map((f) => f.id_local), generado_en: { [Op.gt]: generado } },
+        raw: true,
+        transaction,
+    })).map((f) => f.id_local));
+    return masNuevas.size ? filas.filter((f) => !masNuevas.has(f.id_local)) : filas;
+}
 
 class syncService {
     constructor() {}
@@ -37,7 +54,11 @@ class syncService {
                 'Estos datos vienen de otra base de datos (otra tienda o una instalación nueva). ' +
                 'Si reinstalaste la tienda, desvincúlala en la nube con "npm run desvincular-tienda".');
         }
-        const conTienda = (filas, convertir) => lista(filas).map((x) => ({ ...convertir(x), tienda_id: tienda.id, id_local: x.id }));
+        const generado = new Date(p.generado_en);
+        if (Number.isNaN(generado.getTime())) throw new ErrorNube(400, 'Al paquete le falta la fecha en que se generó.');
+        const conTienda = (filas, convertir) => lista(filas).map((x) => ({
+            ...convertir(x), tienda_id: tienda.id, id_local: x.id, generado_en: generado,
+        }));
 
         const ventas = conTienda(p.ventas, (v) => ({
             folio: v.folio,
@@ -75,6 +96,7 @@ class syncService {
             num_ventas: c.num_ventas ?? 0, ingresos: c.ingresos ?? '0', retiros: c.retiros ?? '0',
         }));
 
+        let omitidos = 0;
         await obtenerSequelize().transaction(async (transaction) => {
             await tienda.update({
                 uuid_local: p.tienda.uuid,
@@ -86,10 +108,16 @@ class syncService {
                 [models.Ventas, ventas], [models.Productos, productos],
                 [models.Trabajadores, trabajadores], [models.Cajas, cajas],
             ]) {
-                if (filas.length) await modelo.bulkCreate(filas, { updateOnDuplicate: camposDe(modelo), transaction });
+                if (!filas.length) continue;
+                const nuevas = await sinLasMasViejas(modelo, tienda.id, filas, generado, transaction);
+                omitidos += filas.length - nuevas.length;
+                if (nuevas.length) await modelo.bulkCreate(nuevas, { updateOnDuplicate: camposDe(modelo), transaction });
             }
         });
-        return { ventas: ventas.length, productos: productos.length, trabajadores: trabajadores.length, cajas: cajas.length };
+        return {
+            ventas: ventas.length, productos: productos.length, trabajadores: trabajadores.length, cajas: cajas.length,
+            omitidos,
+        };
     }
 }
 

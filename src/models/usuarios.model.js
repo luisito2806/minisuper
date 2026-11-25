@@ -59,5 +59,13 @@ export const UsuariosSchema = {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
         field: 'activo'
+    },
+    // true = al entrar debe cambiar su contraseña antes de usar el sistema
+    // (usuarios iniciales y contraseñas puestas por el administrador).
+    debe_cambiar_contrasena: {
+        allowNull: false,
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        field: 'debe_cambiar_contrasena'
     }
 };

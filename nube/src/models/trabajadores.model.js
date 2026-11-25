@@ -26,5 +26,8 @@ export const TrabajadoresSchema = {
     numero: { allowNull: false, type: DataTypes.STRING(20), field: 'numero' },
     nombre: { allowNull: false, type: DataTypes.STRING(120), field: 'nombre' },
     area: { allowNull: true, type: DataTypes.STRING(80), field: 'area' },
-    activo: { allowNull: false, type: DataTypes.BOOLEAN, field: 'activo' }
+    activo: { allowNull: false, type: DataTypes.BOOLEAN, field: 'activo' },
+    // Cuándo generó la tienda estos datos. Un paquete más viejo (por
+    // ejemplo, una USB que se cargó tarde) no reemplaza datos más nuevos.
+    generado_en: { allowNull: true, type: DataTypes.DATE, field: 'generado_en' }
 };

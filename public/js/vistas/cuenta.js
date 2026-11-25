@@ -1,10 +1,15 @@
 // Cambio de contraseña del usuario actual.
 import { api, aviso, esc } from '../comun.js';
 
-export async function render(el, { usuario }) {
+/**
+ * `obligatorio`: el usuario entró con una contraseña inicial o puesta por
+ * el administrador y no puede usar el sistema hasta cambiarla.
+ */
+export async function render(el, { usuario, obligatorio = false }) {
   el.innerHTML = `
     <section class="panel">
       <h1><span class="acento">Mi</span> cuenta</h1>
+      ${obligatorio ? '<p class="error-form">Antes de continuar, cambia tu contraseña por una que solo tú conozcas.</p>' : ''}
       <p>${esc(usuario.nombre)} · usuario <strong>${esc(usuario.usuario)}</strong> · ${usuario.rol === 'administrador' ? 'Administrador' : 'Cajero'}</p>
       <form id="f-pass" novalidate>
         <h2>Cambiar contraseña</h2>
@@ -28,6 +33,7 @@ export async function render(el, { usuario }) {
     try {
       await api('POST', '/api/auth/cambiar-contrasena', { actual: f.actual.value, nueva: f.nueva.value });
       f.reset();
+      if (obligatorio) return void location.replace('/app.html');
       aviso('Contraseña actualizada.');
     } catch (err) {
       error.textContent = err.message;

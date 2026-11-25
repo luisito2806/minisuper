@@ -18,7 +18,9 @@ import { ErrorApp } from './errores.js';
 import { hoyMexico } from './fechas.js';
 
 const RAIZ = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-export const CARPETA = path.join(RAIZ, 'respaldos');
+// Instalado con MiniSuper-Setup.exe, los datos viven aparte del programa
+// (MINISUPER_DATOS = C:\ProgramData\MiniSuper); si no, en el proyecto.
+export const CARPETA = path.join(process.env.MINISUPER_DATOS || RAIZ, 'respaldos');
 const CONSERVAR = 30;
 const PATRON = /^minisuper_\d{4}-\d{2}-\d{2}_\d{4}\.backup$/;
 

@@ -125,6 +125,8 @@ export async function render(el, { ctx }) {
       <h2>Entrar desde otra computadora</h2>
       <p class="muted">Con Tailscale instalado en esta computadora y en la de la ciudad (ver INSTALACION.md), abre en la otra
         computadora la dirección marcada como Tailscale. Solo funciona cuando la tienda tiene internet y esta computadora está prendida.</p>
+      <p class="error-form" id="red-cerrada" hidden>Ahora solo se puede entrar desde esta computadora. Para permitir otras,
+        ejecuta el instalador con <code>-Tailscale</code> (o pon <code>HOST=0.0.0.0</code> en el archivo .env) y reinicia.</p>
       <div class="tabla-wrap"><table>
         <thead><tr><th>Red</th><th>Dirección para abrir en el navegador</th></tr></thead>
         <tbody id="red"></tbody>
@@ -227,6 +229,7 @@ export async function render(el, { ctx }) {
   // ---------- Red ----------
   async function cargarRed() {
     const r = await api('GET', '/api/sincronizacion/red');
+    el.querySelector('#red-cerrada').hidden = r.en_red;
     el.querySelector('#red').innerHTML = r.direcciones.map((d) => `
       <tr><td>${d.tailscale ? '<span class="estado ok">Tailscale (desde la ciudad)</span>' : esc(d.interfaz)}</td>
       <td><code>${esc(d.url)}</code></td></tr>`).join('')

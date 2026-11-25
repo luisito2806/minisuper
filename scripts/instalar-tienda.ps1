@@ -33,8 +33,20 @@ if ([int]($version.Split('.')[0]) -lt 20) {
     exit 1
 }
 Write-Host "Node.js $version OK"
-& npm install --omit=dev --no-audit --no-fund
-if ($LASTEXITCODE -ne 0) { Write-Host 'Fallo npm install.' -ForegroundColor Red; exit 1 }
+
+# Si ya estaba instalado y corriendo (se vuelve a ejecutar para actualizar),
+# se detiene: Windows no deja reemplazar archivos en uso, y al final se
+# arranca una sola copia con el .env actual.
+Get-CimInstance Win32_Process -Filter "Name = 'cmd.exe'" |
+    Where-Object { $_.CommandLine -like '*servidor.cmd*' } |
+    ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" |
+    Where-Object { $_.CommandLine -like '*server.js*' } |
+    ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+
+# npm ci instala exactamente las versiones de package-lock.json.
+& npm ci --omit=dev --no-audit --no-fund
+if ($LASTEXITCODE -ne 0) { Write-Host 'Fallo npm ci.' -ForegroundColor Red; exit 1 }
 
 # 2. Archivo .env
 $envFile = Join-Path $raiz '.env'
@@ -52,6 +64,8 @@ if (-not (Test-Path $envFile)) {
         "SESSION_SECRET=$secreto"
         'DATOS_DE_PRUEBA=false'
         'PORT=3000'
+        '# 127.0.0.1 = solo esta computadora; 0.0.0.0 = tambien otras (Tailscale, red local)'
+        'HOST=127.0.0.1'
         '# Para ver la tienda desde la ciudad (paso 3 de INSTALACION.md):'
         '# SYNC_URL=https://tu-nube.onrender.com'
         '# SYNC_TOKEN=clave-que-da-crear-tienda'
@@ -104,9 +118,12 @@ if ($Tailscale) {
         # Solo direcciones de Tailscale (100.64.0.0/10): nadie mas puede entrar.
         New-NetFirewallRule -DisplayName 'Mini Super (Tailscale)' -Direction Inbound -Protocol TCP -LocalPort 3000 `
             -RemoteAddress '100.64.0.0/10' -Action Allow | Out-Null
+        # El servidor debe aceptar conexiones que no sean de esta computadora.
+        $lineas = @(Get-Content $envFile | Where-Object { $_ -notmatch '^\s*HOST\s*=' })
+        Set-Content -Path $envFile -Value ($lineas + 'HOST=0.0.0.0') -Encoding ascii
         powercfg /change standby-timeout-ac 0
         powercfg /change hibernate-timeout-ac 0
-        Write-Host 'Firewall: puerto 3000 abierto solo para Tailscale. Suspension desactivada con corriente.'
+        Write-Host 'Firewall: puerto 3000 abierto solo para Tailscale (HOST=0.0.0.0 en .env). Suspension desactivada con corriente.'
     }
 }
 

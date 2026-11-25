@@ -17,7 +17,40 @@ La tienda **nunca depende de internet**: vende, cobra y guarda todo en su propia
 - **Dos memorias USB** de 16 GB o más: una se queda en la tienda y la otra viaja a la ciudad, y se van turnando.
 - Opcional: lector de código de barras USB (funciona como teclado) e impresora de tickets de 80 mm.
 
-### Instalación (una sola vez)
+### Opción A (recomendada): instalador, sin internet
+
+En la tienda **no hay que instalar PostgreSQL ni Node.js**: `MiniSuper-Setup.exe` los trae adentro.
+
+**En tu computadora (con internet), una vez por versión:**
+1. Ten instalados Node.js 20+, PostgreSQL (la misma versión principal que usará la tienda, hoy la 18) e Inno Setup 6 (`winget install JRSoftware.InnoSetup`).
+2. En la carpeta del proyecto ejecuta:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File instalador\empaquetar.ps1
+   ```
+
+   Toma Node y PostgreSQL de tu computadora (no descarga nada) y deja `instalador\salida\MiniSuper-Setup-<versión>.exe` (unos 60–70 MB).
+
+**En la tienda:**
+1. Copia el `.exe` con una USB y ejecútalo (pide permiso de administrador). Opciones del asistente:
+   - *Imprimir el ticket directo*: el ticket sale en la impresora predeterminada sin el cuadro de impresión.
+   - *Permitir entrar desde la ciudad con Tailscale*: ver el paso 2.
+2. El instalador:
+   - copia el programa a `C:\Program Files\MiniSuper`;
+   - crea la base de datos en `C:\ProgramData\MiniSuper\pgdata` con una contraseña aleatoria, como servicio de Windows **MiniSuperPostgreSQL** (puerto 5433, solo esta computadora);
+   - crea `C:\ProgramData\MiniSuper\.env`;
+   - hace que el sistema **arranque solo al encender la computadora**, aunque nadie inicie sesión, y que se reinicie si se cae;
+   - pone el icono **Mini Súper** en el escritorio.
+3. Abre el icono (si la computadora acaba de encender, espera unos segundos) y entra con `admin` / `Admin123!`. El sistema te pide **poner una contraseña nueva** antes de continuar (al cajero le pasa lo mismo la primera vez).
+4. En **Configuración**, llena los datos de la tienda y elige cómo se maneja el IVA. Si no cobras IVA, elige **No cobro IVA**.
+
+**Actualizar:** ejecuta un `MiniSuper-Setup` más nuevo. Conserva la base, los respaldos y el `.env`; si los modelos cambiaron, el sistema hace un respaldo antes de actualizar las tablas. El instalador nuevo debe traer la **misma versión principal de PostgreSQL** (si no, se detiene sin tocar los datos).
+
+**Desinstalar:** desde *Configuración de Windows → Aplicaciones*. Quita el programa y los servicios, pero **no** `C:\ProgramData\MiniSuper` (base, respaldos y `.env`).
+
+**Datos y pgAdmin:** todo lo de la tienda está en `C:\ProgramData\MiniSuper` (solo administradores pueden abrirla, porque `.env` tiene la contraseña). Para verla con pgAdmin, conéctate a `localhost`, puerto `5433`, usuario `postgres`, con la contraseña `DB_PASSWORD` de ese `.env`.
+
+### Opción B: instalación manual (desarrollo o computadora con PostgreSQL ya instalado)
 1. Instala **PostgreSQL** (incluye pgAdmin) y **Node.js LTS** (20 o más nuevo).
 2. En pgAdmin crea la base `minisuper` (clic derecho en **Databases** → **Create** → **Database…**).
 3. Copia la carpeta del proyecto a la computadora, por ejemplo a `C:\MiniSuper`.
@@ -27,22 +60,20 @@ La tienda **nunca depende de internet**: vende, cobra y guarda todo en su propia
    powershell -ExecutionPolicy Bypass -File scripts\instalar-tienda.ps1
    ```
 
-   El script:
-   - instala las dependencias;
+   El script necesita internet para instalar las dependencias. Además:
    - crea el `.env` (te pide la contraseña de PostgreSQL);
    - hace que el sistema **arranque solo** al iniciar sesión en Windows, sin ventana, y que se reinicie si se cierra por un error;
    - pone el icono **Mini Super** en el escritorio.
-5. Abre el icono, entra con `admin` / `Admin123!` y **cambia las contraseñas** en *Mi cuenta*.
-6. En **Configuración**, llena los datos de la tienda y elige cómo se maneja el IVA. Si no cobras IVA, elige **No cobro IVA**.
+5. Sigue los pasos 3 y 4 de la opción A.
 
 Para quitarlo: `scripts\desinstalar-tienda.ps1`. Este script no borra la base ni los respaldos.
 
 ### Respaldos y USB
-- Cada día, al encender, se hace un **respaldo automático** en la carpeta `respaldos`. Se conservan los últimos 30.
+- Cada día, al encender, se hace un **respaldo automático** en la carpeta `respaldos` (con el instalador: `C:\ProgramData\MiniSuper\respaldos`). Se conservan los últimos 30.
 - Cada semana: conecta la USB y ve a **Configuración → Copiar a USB → Copiar a la USB**. Se guarda en `USB:\MiniSuper\<fecha>\`:
   - `minisuper_….backup`: el respaldo completo. Se restaura en pgAdmin con **Restore…**.
   - `paquete_minisuper_….json.gz`: los cambios para la nube (paso 3).
-- Si algo falla, el registro del servidor está en `logs\servidor.log`.
+- Si algo falla, el registro del servidor está en `logs\servidor.log` (con el instalador: `C:\ProgramData\MiniSuper\logs\servidor.log`; la instalación deja el suyo en `instalacion.log`).
 
 ---
 
@@ -60,7 +91,7 @@ Para internet en una zona sin señal, las opciones son **internet satelital** o,
    powershell -ExecutionPolicy Bypass -File scripts\instalar-tienda.ps1 -Tailscale
    ```
 
-   Esto abre el puerto 3000 **solo para tu red de Tailscale** y evita que la computadora se suspenda.
+   Esto pone `HOST=0.0.0.0` en el `.env` (sin eso el sistema solo acepta conexiones de la propia computadora), abre el puerto 3000 **solo para tu red de Tailscale** y evita que la computadora se suspenda.
 4. Instala Tailscale en la computadora o el celular de la ciudad, con la misma cuenta.
 5. En la tienda ve a **Configuración → Entrar desde otra computadora**. Copia la dirección marcada **Tailscale** (por ejemplo `http://100.101.102.103:3000`) y ábrela en el navegador de la ciudad.
 
@@ -128,3 +159,8 @@ La primera vez se manda todo lo que ya existía.
 - Cada tienda tiene su propia clave (`SYNC_TOKEN`). La nube guarda solo una huella (hash) de ella.
 - Si la computadora de la tienda se reinstala desde cero (base nueva), la nube rechaza sus datos para no mezclarlos con los anteriores. Para aceptarla: `npm run desvincular-tienda -- 1` (agrega `--borrar` para empezar de cero).
 - Usa contraseñas largas en la nube: está en internet. Después de 5 intentos fallidos, el usuario se bloquea 5 minutos.
+ 
+ Lo que falta
+Inno Setup no está instalado, así que el .exe todavía no se ha generado. Instálalo con winget install JRSoftware.InnoSetup y vuelve a ejecutar empaquetar.ps1. Debería pesar unos 60–70 MB, pero aún no lo he podido confirmar. Si quieres, lo instalo yo.
+Falta probar la parte que necesita administrador: el servicio de PostgreSQL, la tarea de arranque y los permisos de la carpeta de datos. Tu Windows 11 Home no tiene Sandbox, así que conviene probar el .exe en otra PC o laptop antes de llevarlo a la tienda.
+El .env.example ya no existe, y apareció un database.zip. Supuse que lo borraste tú y no lo volví a crear. El instalador no lo necesita, pero el README todavía dice "copia .env.example".

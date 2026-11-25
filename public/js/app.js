@@ -1,4 +1,4 @@
-import { api, aplicarFormato, aviso, esc, etiquetarTablas } from './comun.js';
+import { api, aplicarFormato, aviso, cargarTienda, esc, etiquetarTablas } from './comun.js';
 
 // Secciones. `admin: true` → solo las ve el administrador (el servidor
 // también lo valida; ocultarlas aquí es solo por comodidad).
@@ -42,6 +42,8 @@ async function iniciar() {
   let config;
   try {
     ({ usuario } = await api('GET', '/api/auth/yo'));
+    // Contraseña inicial o puesta por el administrador: solo se puede cambiar.
+    if (usuario.debe_cambiar_contrasena) return void (await soloCambiarContrasena(usuario));
     config = await api('GET', '/api/configuracion');
   } catch (err) {
     if (err.status !== 401) vista.innerHTML = `<div class="panel"><p class="error-form">${esc(err.message)}</p></div>`;
@@ -161,6 +163,27 @@ async function iniciar() {
   window.addEventListener('hashchange', mostrar);
 
   mostrar();
+}
+
+/** Pantalla única "cambia tu contraseña" (sin menú) hasta que la cambie. */
+async function soloCambiarContrasena(usuario) {
+  const tienda = await cargarTienda().catch(() => null);
+  if (tienda) document.getElementById('nombre-tienda').textContent = tienda.nombre;
+  document.getElementById('usuario-actual').textContent = usuario.nombre;
+  document.getElementById('menu').innerHTML = '';
+  // En el celular, el botón "Menú" deja llegar a "Salir".
+  document.getElementById('menu-boton').addEventListener('click', () => {
+    document.querySelector('.barra').classList.toggle('abierta');
+  });
+  document.getElementById('salir').addEventListener('click', async () => {
+    try {
+      await api('POST', '/api/auth/logout', {});
+    } finally {
+      location.replace('/login.html');
+    }
+  });
+  const { render } = await import('./vistas/cuenta.js');
+  await render(vista, { usuario, obligatorio: true });
 }
 
 // Errores no capturados en manejadores: se muestran en lugar de perderse.

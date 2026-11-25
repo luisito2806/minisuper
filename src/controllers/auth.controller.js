@@ -5,7 +5,7 @@ const service = new authService();
 
 const login = async (req, res) => {
     try {
-        const usuario = await service.login(req.body);
+        const usuario = await service.login(req.body, req.ip);
         // Nueva sesión para evitar fijación de sesión.
         await new Promise((ok, falla) => req.session.regenerate((err) => (err ? falla(err) : ok())));
         req.session.usuarioId = usuario.id;

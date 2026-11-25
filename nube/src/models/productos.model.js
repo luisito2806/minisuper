@@ -31,5 +31,8 @@ export const ProductosSchema = {
     costo: { allowNull: false, type: DataTypes.DECIMAL(12, 2), field: 'costo' },
     existencia: { allowNull: false, type: DataTypes.DECIMAL(12, 3), field: 'existencia' },
     stock_minimo: { allowNull: false, type: DataTypes.DECIMAL(12, 3), field: 'stock_minimo' },
-    activo: { allowNull: false, type: DataTypes.BOOLEAN, field: 'activo' }
+    activo: { allowNull: false, type: DataTypes.BOOLEAN, field: 'activo' },
+    // Cuándo generó la tienda estos datos. Un paquete más viejo (por
+    // ejemplo, una USB que se cargó tarde) no reemplaza datos más nuevos.
+    generado_en: { allowNull: true, type: DataTypes.DATE, field: 'generado_en' }
 };

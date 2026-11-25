@@ -1,6 +1,6 @@
 {
   "name": "minisuper",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Aplicación web para administrar un mini súper (ventas, caja, inventario, compras y reportes) con PostgreSQL y Sequelize.",
   "private": true,
   "type": "module",

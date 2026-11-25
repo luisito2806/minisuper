@@ -20,7 +20,7 @@ export async function render(el, { usuario: yo, abrirDialogo, cerrarDialogo }) {
         <td>${esc(u.usuario)}</td>
         <td>${u.rol === 'administrador' ? 'Administrador' : 'Cajero'}</td>
         <td>${esc(fechaHora(u.creado_en))}</td>
-        <td>${etiquetaEstado(u.activo ? 'activo' : 'inactivo')}</td>
+        <td>${etiquetaEstado(u.activo ? 'activo' : 'inactivo')}${u.activo && u.debe_cambiar_contrasena ? ' <span class="muted">· falta que cambie su contraseña</span>' : ''}</td>
         <td><button type="button" class="chico" data-i="${i}">Editar</button></td>
       </tr>`).join('');
   }
@@ -41,6 +41,7 @@ export async function render(el, { usuario: yo, abrirDialogo, cerrarDialogo }) {
           </select></label>
           <label>${nuevo ? 'Contraseña * (mín. 8)' : 'Nueva contraseña (vacío = no cambiar)'}
             <input name="contrasena" type="password" autocomplete="new-password" minlength="8"></label>
+          ${soyYo ? '' : '<p class="muted ancho">Al entrar con la contraseña que pongas aquí, el sistema le pedirá elegir una propia.</p>'}
           <label class="check ancho"><input type="checkbox" name="activo" ${u.activo ? 'checked' : ''} ${soyYo ? 'disabled' : ''}> Activo (puede iniciar sesión)</label>
         </div>
         <p class="error-form" id="error-usr" role="alert"></p>

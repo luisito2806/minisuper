@@ -141,5 +141,13 @@ export const ConfiguracionSchema = {
         references: { model: 'usuarios', key: 'id' },
         onDelete: 'RESTRICT',
         onUpdate: 'CASCADE'
+    },
+    // Uso interno: huella de los modelos con la que se crearon las tablas.
+    // Si cambia (versión nueva del programa), se respalda y se actualizan
+    // las tablas; si no, el arranque se salta sync({ alter: true }).
+    esquema_huella: {
+        allowNull: true,
+        type: DataTypes.STRING(64),
+        field: 'esquema_huella'
     }
 };

@@ -33,13 +33,19 @@ const PRODUCTOS = [
     ['INT-0003', 'Cebolla blanca', 'Frutas y verduras', '30.00', '21.00', '0', '8.25', '4', 'kg'],
 ];
 
+// usuario, contraseña inicial, nombre, rol
+const USUARIOS_INICIALES = [
+    ['admin', 'Admin123!', 'Administrador', 'administrador'],
+    ['cajero', 'Cajero123!', 'Cajero 1', 'cajero'],
+];
+
 /**
  * Datos iniciales. Solo se insertan si la tabla está vacía, así que es
  * seguro ejecutarlo en cada arranque.
  *   - Siempre: la fila de configuración y los usuarios admin y cajero.
  *   - Con datosDePrueba: categorías, proveedores, 20 productos y 3 trabajadores.
- * Contraseñas iniciales (cambiarlas al primer uso): admin / Admin123!,
- * cajero / Cajero123!
+ * Contraseñas iniciales: admin / Admin123!, cajero / Cajero123!. El sistema
+ * obliga a cambiarlas la primera vez que se entra.
  */
 export async function sembrar(sequelize, { datosDePrueba = false } = {}) {
     const { Configuracion, Usuarios, Categorias, Proveedores, Productos, MovimientosInventario, Trabajadores } = sequelize.models;
@@ -47,10 +53,19 @@ export async function sembrar(sequelize, { datosDePrueba = false } = {}) {
     await Configuracion.findOrCreate({ where: { id: 1 }, defaults: { id: 1 } });
 
     if ((await Usuarios.count()) === 0) {
-        await Usuarios.bulkCreate([
-            { nombre: 'Administrador', usuario: 'admin', contrasena_hash: await bcrypt.hash('Admin123!', 10), rol: 'administrador' },
-            { nombre: 'Cajero 1', usuario: 'cajero', contrasena_hash: await bcrypt.hash('Cajero123!', 10), rol: 'cajero' },
-        ]);
+        await Usuarios.bulkCreate(await Promise.all(USUARIOS_INICIALES.map(async ([usuario, contrasena, nombre, rol]) => ({
+            nombre, usuario, rol, contrasena_hash: await bcrypt.hash(contrasena, 10), debe_cambiar_contrasena: true,
+        }))));
+    } else {
+        // Instalaciones anteriores: si alguien sigue con la contraseña
+        // inicial (que viene en el README), se le pide cambiarla al entrar.
+        const iniciales = await Usuarios.scope('conContrasena').findAll({
+            where: { usuario: USUARIOS_INICIALES.map((u) => u[0]), debe_cambiar_contrasena: false },
+        });
+        for (const u of iniciales) {
+            const [, contrasena] = USUARIOS_INICIALES.find((x) => x[0] === u.usuario);
+            if (await bcrypt.compare(contrasena, u.contrasena_hash)) await u.update({ debe_cambiar_contrasena: true });
+        }
     }
 
     if (datosDePrueba && (await Trabajadores.count()) === 0) {

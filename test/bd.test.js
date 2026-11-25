@@ -1,7 +1,7 @@
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { levantar, producto } from './ayuda.js';
-import { prepararBaseDeDatos } from '../src/libs/sequelize.js';
+import { levantar, producto, quitarCambioPendiente } from './ayuda.js';
+import { huellaModelos, prepararBaseDeDatos } from '../src/libs/sequelize.js';
 
 let entorno;
 let admin;
@@ -34,7 +34,46 @@ test('los modelos crean las 14 tablas y reiniciar el servidor no duplica nada', 
   const antes = await conteo();
   assert.equal(antes.tablas, 14);
   await prepararBaseDeDatos({ datosDePrueba: true }); // como un segundo arranque
+  await quitarCambioPendiente(entorno.sequelize);
   assert.deepEqual(await conteo(), antes);
+});
+
+test('las tablas solo se modifican (con respaldo antes) si cambiaron los modelos', async () => {
+  const huella = async () => (await entorno.db.query('SELECT esquema_huella AS h FROM configuracion')).rows[0].h;
+  assert.equal(await huella(), huellaModelos());
+  let respaldos = 0;
+  const antesDeActualizar = () => { respaldos += 1; };
+
+  // Mismos modelos: no se llama al respaldo ni se ejecuta sync alter.
+  await prepararBaseDeDatos({ antesDeActualizar });
+  assert.equal(respaldos, 0);
+
+  // Versión nueva del programa (huella distinta): respaldo y actualización.
+  await entorno.db.query("UPDATE configuracion SET esquema_huella = 'version-anterior'");
+  await prepararBaseDeDatos({ antesDeActualizar });
+  assert.equal(respaldos, 1);
+  assert.equal(await huella(), huellaModelos());
+
+  // Si el respaldo falla, no se toca la base y el siguiente arranque lo reintenta.
+  await entorno.db.query("UPDATE configuracion SET esquema_huella = 'version-anterior'");
+  await assert.rejects(
+    prepararBaseDeDatos({ antesDeActualizar: () => { throw new Error('sin pg_dump'); } }),
+    /sin pg_dump/,
+  );
+  assert.equal(await huella(), 'version-anterior');
+  await prepararBaseDeDatos({});
+  assert.equal(await huella(), huellaModelos());
+  await quitarCambioPendiente(entorno.sequelize);
+});
+
+test('quien sigue con la contraseña inicial debe cambiarla al entrar', async () => {
+  // Como una instalación anterior a esta regla: nadie marcado.
+  await quitarCambioPendiente(entorno.sequelize);
+  await prepararBaseDeDatos({});
+  const { rows } = await entorno.db.query('SELECT usuario, debe_cambiar_contrasena AS d FROM usuarios ORDER BY id');
+  assert.deepEqual(rows.slice(0, 2), [{ usuario: 'admin', d: true }, { usuario: 'cajero', d: true }]);
+  assert.equal((await admin.get('/api/productos')).status, 403);
+  await quitarCambioPendiente(entorno.sequelize);
 });
 
 test('las reglas se cumplen aunque se inserte desde pgAdmin', async () => {
