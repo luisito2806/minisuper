@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Guía de instalación del Mini Súper</title>
+<style>
+  @page { size: Letter; margin: 18mm 17mm 18mm 17mm; }
+  :root { --tinta: #1d2430; --suave: #5b6573; --linea: #d9dee5; --acento: #1f6f5c; --acento-fondo: #e8f3ef; --aviso: #8a5a00; --aviso-fondo: #fff4dc; --peligro: #a3271f; --peligro-fondo: #fdecea; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: var(--tinta); font-size: 10.5pt; line-height: 1.45; margin: 0; background: #fff; }
+  h1 { font-size: 24pt; margin: 0 0 4px; letter-spacing: -0.3px; }
+  h2 { font-size: 15pt; margin: 26px 0 8px; padding-bottom: 5px; border-bottom: 2px solid var(--acento); color: var(--acento); break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 16px 0 6px; break-after: avoid; }
+  p { margin: 6px 0; }
+  .subtitulo { color: var(--suave); font-size: 11.5pt; margin: 0 0 16px; }
+  .portada { border-bottom: 1px solid var(--linea); padding-bottom: 14px; margin-bottom: 6px; }
+  .meta { color: var(--suave); font-size: 9pt; }
+  ol.pasos { padding-left: 0; list-style: none; counter-reset: paso; margin: 8px 0; }
+  ol.pasos > li { counter-increment: paso; position: relative; padding: 2px 0 8px 34px; break-inside: avoid; }
+  ol.pasos > li::before { content: counter(paso); position: absolute; left: 0; top: 1px; width: 22px; height: 22px; border-radius: 50%; background: var(--acento); color: #fff; font-weight: 700; font-size: 9.5pt; text-align: center; line-height: 22px; }
+  ul { margin: 4px 0; padding-left: 20px; }
+  li { margin: 2px 0; }
+  code, .clave { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; background: #f1f3f6; border: 1px solid var(--linea); border-radius: 3px; padding: 0 4px; }
+  pre { font-family: Consolas, "Courier New", monospace; font-size: 9.3pt; background: #f1f3f6; border: 1px solid var(--linea); border-radius: 4px; padding: 8px 10px; margin: 6px 0; white-space: pre-wrap; break-inside: avoid; }
+  .boton { font-weight: 600; white-space: nowrap; }
+  .caja { border-radius: 6px; padding: 8px 12px; margin: 10px 0; break-inside: avoid; border-left: 4px solid; }
+  .caja.nota { background: var(--acento-fondo); border-color: var(--acento); }
+  .caja.aviso { background: var(--aviso-fondo); border-color: #d99a00; }
+  .caja.peligro { background: var(--peligro-fondo); border-color: var(--peligro); }
+  .caja strong:first-child { display: block; margin-bottom: 2px; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 9.8pt; break-inside: avoid; }
+  th, td { border: 1px solid var(--linea); padding: 5px 7px; text-align: left; vertical-align: top; }
+  th { background: #f1f3f6; font-weight: 600; }
+  .esquema { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 10px 0; }
+  .esquema div { border: 1px solid var(--linea); border-radius: 6px; padding: 8px 10px; font-size: 9.6pt; }
+  .esquema b { display: block; color: var(--acento); margin-bottom: 2px; }
+  .check { list-style: none; padding-left: 0; }
+  .check li::before { content: "☐  "; font-size: 11pt; }
+  .salto { break-before: page; }
+  .hoja td { height: 30px; }
+  .hoja td:first-child { width: 44%; }
+</style>
+</head>
+<body>
+
+<div class="portada">
+  <h1>Instalar el Mini Súper en la tienda</h1>
+  <p class="subtitulo">Paso a paso para dejar funcionando el sistema en la computadora de la tienda y conectarlo al panel en la nube.</p>
+  <p class="meta">Versión del sistema: 0.3.0 · Instalador: <code>MiniSuper-Setup-0.3.0.exe</code> · Guía actualizada al 24/11/2026</p>
+</div>
+
+<h2>Antes de empezar</h2>
+<p>La instalación tiene tres partes. Las partes 1 y 3 necesitan internet; la parte 2 (la computadora de la tienda) <strong>no</strong>.</p>
+<table>
+  <tr><th style="width:26%">Parte</th><th>Dónde</th><th style="width:18%">Tiempo aprox.</th></tr>
+  <tr><td><strong>1.</strong> Preparar todo</td><td>Tu computadora, con internet</td><td>15 minutos</td></tr>
+  <tr><td><strong>2.</strong> Instalar y configurar</td><td>Computadora de la tienda, sin internet</td><td>30 a 60 minutos</td></tr>
+  <tr><td><strong>3.</strong> Conectar con el panel</td><td>Computadora de la tienda, cuando haya internet (o con USB)</td><td>5 minutos</td></tr>
+</table>
+
+<h3>Cómo se separan las tiendas en el panel</h3>
+<div class="esquema">
+  <div><b>Usuario de la tienda</b><code>admin</code> + su contraseña. Sirve para vender en <em>esa</em> computadora. Vive solo en su base de datos.</div>
+  <div><b>Clave de la tienda (SYNC_TOKEN)</b>Una clave larga y única para <em>cada</em> tienda. Es lo que le dice al panel de qué tienda vienen los datos.</div>
+  <div><b>Usuario del panel</b><code>admin</code> + la contraseña del panel. Entra al panel y ahí eliges qué tienda ver.</div>
+</div>
+<p>Cada tienda guarda sus datos aparte en el panel, según su clave: la demostración es una tienda y la de tu papá será otra. <strong>Nunca copies la clave de una tienda a otra computadora.</strong></p>
+
+<h2>Parte 1 · En tu computadora (con internet)</h2>
+
+<h3>1.1 Tener el instalador en una USB</h3>
+<ol class="pasos">
+  <li>Busca el archivo <code>MiniSuper-Setup-0.3.0.exe</code> en la carpeta del proyecto: <code>instalador\salida\</code>.
+    <br>Si no está o hiciste cambios al sistema, vuelve a generarlo en PowerShell, dentro de la carpeta del proyecto:
+    <pre>powershell -ExecutionPolicy Bypass -File instalador\empaquetar.ps1</pre>
+    Tarda unos 7 minutos y deja el <code>.exe</code> nuevo en <code>instalador\salida\</code>.</li>
+  <li>Copia el <code>.exe</code> (unos 53 MB) a una memoria USB.</li>
+</ol>
+
+<h3>1.2 Dar de alta la tienda en el panel de la nube</h3>
+<p>Esto crea la <strong>tienda B</strong> en el panel y te da su clave. Se hace una sola vez.</p>
+<ol class="pasos">
+  <li>En <strong>Neon</strong> (neon.tech) abre tu proyecto, elige la base <code>nube</code> en <span class="boton">Connect</span> y copia su dirección (empieza con <code>postgresql://</code> y termina con <code>sslmode=require</code>).</li>
+  <li>En la carpeta <code>nube</code> del proyecto crea un archivo llamado <code>.env</code> (con el punto al inicio) con estas dos líneas:
+    <pre>DATABASE_URL=la-direccion-que-copiaste-de-Neon
+DATABASE_SSL=true</pre>
+    Este archivo no se sube a GitHub.</li>
+  <li>Abre PowerShell en la carpeta <code>nube</code> y ejecuta:
+    <pre>npm install
+npm run crear-tienda -- "Mini Súper de mi papá"</pre></li>
+  <li>El programa muestra el número de la tienda (por ejemplo <code>id 2</code>) y dos líneas:
+    <pre>SYNC_URL=https://minisuper-nube.onrender.com
+SYNC_TOKEN=7c1f0a…(una clave larga)</pre>
+    <strong>Cópialas a un archivo de texto en la USB</strong> (por ejemplo <code>clave-tienda.txt</code>). La clave <strong>solo se muestra una vez</strong>.</li>
+</ol>
+<div class="caja aviso"><strong>Guarda la clave como una contraseña.</strong>Quien la tenga puede mandar datos al panel a nombre de la tienda. Si la pierdes, crea la tienda otra vez con <code>crear-tienda</code> y usa la nueva clave.</div>
+
+<h3>1.3 (Opcional) Usuario del panel solo para tu papá</h3>
+<p>Si quieres que tu papá entre al panel y <strong>solo vea su tienda</strong> (no la demostración), en la misma carpeta <code>nube</code>:</p>
+<pre>npm run crear-usuario -- papa "Nombre de tu papá" "Una-contraseña-de-10-o-más" 2</pre>
+<p>El último número es el <code>id</code> de su tienda (el que mostró el paso anterior). Tú sigues entrando con <code>admin</code> y ves todas.</p>
+
+<h3>1.4 Qué llevar a la tienda</h3>
+<ul class="check">
+  <li>La USB con <code>MiniSuper-Setup-0.3.0.exe</code> y <code>clave-tienda.txt</code>.</li>
+  <li>Un <strong>no-break (UPS)</strong> de al menos 600 VA: los apagones son el mayor riesgo para la base de datos.</li>
+  <li>Opcional: lector de código de barras USB e impresora de tickets (80 o 58 mm) con su controlador.</li>
+  <li>Opcional: tu catálogo de productos en Excel (se puede importar).</li>
+</ul>
+
+<h2 class="salto">Parte 2 · En la computadora de la tienda (sin internet)</h2>
+
+<h3>2.1 Requisitos</h3>
+<ul>
+  <li>Windows 10 u 11 de 64 bits, con una cuenta de <strong>administrador</strong>.</li>
+  <li>Al menos 1 GB libre en el disco <code>C:</code>.</li>
+  <li>No necesita internet, ni PostgreSQL, ni Node.js: el instalador ya los trae.</li>
+  <li>Conecta la computadora (y el módem, si hay) al no-break.</li>
+</ul>
+
+<h3>2.2 Ejecutar el instalador</h3>
+<ol class="pasos">
+  <li>Copia <code>MiniSuper-Setup-0.3.0.exe</code> de la USB al Escritorio y ábrelo con doble clic.</li>
+  <li>Si aparece <strong>"Windows protegió su PC"</strong>: clic en <span class="boton">Más información</span> → <span class="boton">Ejecutar de todas formas</span>. Sale porque el instalador no tiene firma digital de una empresa; es normal.</li>
+  <li>Windows pide permiso de administrador: <span class="boton">Sí</span>.</li>
+  <li>En el asistente, en <strong>Tareas adicionales</strong>:
+    <ul>
+      <li><em>Imprimir el ticket directo en la impresora predeterminada (sin cuadro de impresión)</em>: márcala si ya tienes impresora de tickets y la pusiste como <strong>predeterminada</strong> en Windows.</li>
+      <li><em>Permitir entrar desde la ciudad con Tailscale</em>: <strong>déjala sin marcar</strong> (solo si ya instalaste Tailscale).</li>
+    </ul></li>
+  <li><span class="boton">Instalar</span>. Al final dice <em>"Preparando la base de datos (puede tardar un minuto)…"</em>: espera.</li>
+  <li>Deja marcada <em>Abrir el Mini Súper</em> y clic en <span class="boton">Finalizar</span>.</li>
+</ol>
+<div class="caja nota"><strong>Qué quedó instalado</strong>El programa en <code>C:\Program Files\MiniSuper</code>; la base de datos, los respaldos y la configuración en <code>C:\ProgramData\MiniSuper</code>; el icono <strong>Mini Súper</strong> en el escritorio. El sistema arranca solo cada vez que se enciende la computadora, aunque nadie inicie sesión.</div>
+<div class="caja aviso"><strong>Si el antivirus pregunta</strong>Permite <code>node.exe</code>, <code>postgres.exe</code> y <code>pg_ctl.exe</code> de <code>C:\Program Files\MiniSuper</code>. Son parte del sistema.</div>
+
+<h3>2.3 Primer inicio</h3>
+<ol class="pasos">
+  <li>Abre el icono <strong>Mini Súper</strong> del escritorio. Si la computadora acaba de encender, espera unos segundos: el icono espera solo a que el sistema esté listo.</li>
+  <li>Entra con usuario <code>admin</code> y contraseña <code>Admin123!</code>.</li>
+  <li>El sistema pide <strong>poner una contraseña nueva</strong> (mínimo 8 caracteres, distinta de la anterior). Escríbela en la hoja de datos del final de esta guía.</li>
+</ol>
+
+<h3>2.4 Configuración de la tienda</h3>
+<p>Menú <strong>Configuración</strong>:</p>
+<ul>
+  <li><strong>Datos de la tienda:</strong> <em>Nombre de la tienda</em>, teléfono, dirección y RFC (salen en el ticket).</li>
+  <li><strong>Ticket:</strong> <em>Ancho del papel</em> (80 mm el más común, 58 mm impresoras pequeñas), texto bajo el nombre y <em>Mensaje al pie del ticket</em>.</li>
+  <li><strong>Impuestos — ¿Cómo se maneja el IVA?:</strong> si no cobras IVA, elige <strong>No cobro IVA</strong>. Si tus precios ya traen IVA, <strong>El IVA ya viene en el precio</strong>.</li>
+  <li><strong>Ventas e inventario:</strong> deja marcado <em>Exigir caja abierta para registrar ventas</em>. Deja <strong>sin</strong> marcar <em>Permitir vender más de la existencia registrada</em> (salvo que todavía no tengas el inventario capturado).</li>
+</ul>
+<p>Clic en <span class="boton">Guardar configuración</span>.</p>
+
+<h3>2.5 Usuarios</h3>
+<ol class="pasos">
+  <li>Menú <strong>Usuarios</strong>: ya existe <code>cajero</code> con contraseña <code>Cajero123!</code>. Al entrar por primera vez también se le pide cambiarla.</li>
+  <li>Para cada persona que cobra: <span class="boton">Nuevo usuario</span>, rol <strong>Cajero</strong> y una contraseña temporal. Al entrar, el sistema le pide poner la suya.</li>
+  <li>Si un empleado deja de trabajar, edítalo y quita <em>Activo</em> (no se borra para conservar su historial).</li>
+</ol>
+
+<h3>2.6 Catálogo e inventario inicial</h3>
+<ol class="pasos">
+  <li>Menú <strong>Proveedores</strong>: da de alta a quienes te surten (opcional, pero ayuda a la lista de compra).</li>
+  <li>Menú <strong>Productos</strong>: crea las categorías con <span class="boton">Nueva categoría</span> (Abarrotes, Bebidas, Lácteos…).</li>
+  <li>Da de alta los productos con <span class="boton">Nuevo producto</span>: código de barras (escanéalo con el lector), nombre, categoría, precio, costo, existencia y stock mínimo.
+    <br>Si tienes muchos: <span class="boton">Exportar a Excel</span> te da la plantilla; llénala y usa <span class="boton">Importar de Excel</span>. Las categorías que no existan se crean solas.</li>
+  <li>Menú <strong>Nómina</strong> → <span class="boton">Nuevo trabajador</span> (si fían a trabajadores y se les descuenta en nómina): da de alta a cada uno con su número. También se pueden importar de Excel.</li>
+</ol>
+
+<h3>2.7 Prueba completa antes de dejarlo</h3>
+<ul class="check">
+  <li>Entra como cajero, ve a <strong>Caja</strong> → <span class="boton">Abrir caja</span> con el fondo inicial.</li>
+  <li>En <strong>Vender</strong>, escanea un producto, cobra en efectivo e imprime el ticket.</li>
+  <li>Haz una venta a crédito a un trabajador (si aplica).</li>
+  <li>En <strong>Caja</strong>, haz el corte: cuenta el efectivo y ciérrala.</li>
+  <li>Como administrador, revisa que la venta aparezca en <strong>Ventas</strong> y <strong>Reportes</strong>, y que la existencia haya bajado en <strong>Inventario</strong>.</li>
+  <li>Apaga y vuelve a encender la computadora, abre el icono y comprueba que todo sigue ahí.</li>
+</ul>
+
+<h2 class="salto">Parte 3 · Conectar con el panel de la nube</h2>
+
+<h3>3.1 Poner la clave de la tienda en la computadora</h3>
+<ol class="pasos">
+  <li>Abre el menú Inicio, busca <strong>Bloc de notas</strong>, clic derecho → <span class="boton">Ejecutar como administrador</span>.</li>
+  <li>En el Bloc de notas: <span class="boton">Archivo → Abrir</span>, abajo a la derecha cambia <em>Documentos de texto (*.txt)</em> por <strong>Todos los archivos (*.*)</strong> y abre:
+    <pre>C:\ProgramData\MiniSuper\.env</pre></li>
+  <li>Al final del archivo pega las dos líneas de <code>clave-tienda.txt</code>, cada una en su renglón y sin <code>#</code> al inicio:
+    <pre>SYNC_URL=https://minisuper-nube.onrender.com
+SYNC_TOKEN=7c1f0a…(la clave de ESTA tienda)</pre>
+    No cambies ninguna otra línea.</li>
+  <li><span class="boton">Archivo → Guardar</span> y cierra el Bloc de notas.</li>
+  <li><strong>Reinicia la computadora</strong> (el sistema lee este archivo al arrancar).</li>
+</ol>
+<div class="caja peligro"><strong>Nunca uses aquí la clave de la demostración.</strong>Cada computadora lleva la clave que le dio <code>crear-tienda</code>. Si por error pegas la de otra tienda, el panel rechaza los datos con el mensaje "vienen de otra base de datos".</div>
+
+<h3>3.2 Comprobar que se conectó</h3>
+<ol class="pasos">
+  <li>En la tienda, como administrador: <strong>Configuración → Ver la tienda desde la ciudad (nube)</strong>.
+    <ul>
+      <li><strong>Conexión con la nube: Activa</strong> → todo bien.</li>
+      <li><strong>Cambios por enviar</strong> baja a 0 en uno o dos minutos (la primera vez manda todo lo que ya había).</li>
+      <li><strong>Sin conexión</strong> → no hay internet o el panel está dormido; reintenta solo cada minuto. Puedes usar <span class="boton">Enviar ahora</span>.</li>
+      <li><strong>No configurada</strong> → revisa el paso 3.1 y reinicia.</li>
+    </ul></li>
+  <li>En cualquier computadora o celular, entra a <code>https://minisuper-nube.onrender.com</code> con <code>admin</code> (o <code>papa</code>) y su contraseña.</li>
+  <li>Arriba está la lista <strong>Tienda</strong> con todas las tiendas por su nombre. Elige la de tu papá: todo el panel (Resumen, Ventas, Inventario, Nómina, Cortes de caja) muestra solo sus datos, separados de la demostración. Por defecto muestra el día de hoy; cambia el periodo para ver más.</li>
+</ol>
+<div class="caja nota"><strong>El panel se duerme</strong>En el plan gratuito, tras 15 minutos sin visitas tarda alrededor de un minuto en abrir. Los datos de la tienda no se pierden: se van acumulando y se mandan cuando el panel responde.</div>
+
+<h3>3.3 Si en la tienda no hay internet: usar la USB</h3>
+<ol class="pasos">
+  <li>En la tienda, una vez por semana: conecta la USB → <strong>Configuración → Copiar a USB</strong> → <span class="boton">Copiar a la USB</span>. Se guarda en <code>USB:\MiniSuper\&lt;fecha&gt;\</code> el respaldo completo y el paquete <code>paquete_minisuper_….json.gz</code>.</li>
+  <li>En la ciudad, entra al panel, elige la tienda y en <strong>Cargar USB</strong> sube el archivo <code>paquete_minisuper_….json.gz</code>. Cargar el mismo paquete dos veces no duplica nada.</li>
+  <li>Si un día se pierde un paquete: en la tienda, <strong>Configuración → Enviar todo de nuevo</strong> y vuelve a copiar a la USB.</li>
+</ol>
+
+<h2>Parte 4 · Uso diario y cuidados</h2>
+<ul>
+  <li><strong>Cada día:</strong> abrir caja al empezar y hacer el corte al cerrar.</li>
+  <li><strong>Respaldos:</strong> el sistema hace uno automático cada día al encender (se guardan los últimos 30 en <code>C:\ProgramData\MiniSuper\respaldos</code>). También hay <span class="boton">Respaldar ahora</span> en Configuración.</li>
+  <li><strong>Cada semana:</strong> <em>Copiar a la USB</em> y llevar la USB a otro lugar (por si se daña la computadora).</li>
+  <li><strong>No apagar a la fuerza</strong> (botón o desconectar): usar Inicio → Apagar. Por eso el no-break.</li>
+  <li><strong>Inventario:</strong> registrar las compras en <strong>Compras</strong> para que suba la existencia, y usar el conteo físico de <strong>Inventario</strong> de vez en cuando.</li>
+</ul>
+
+<h2 class="salto">Parte 5 · Si algo falla</h2>
+<table>
+  <tr><th style="width:34%">Qué pasa</th><th>Qué hacer</th></tr>
+  <tr><td>El icono dice "El Mini Súper todavía no arranca"</td><td>Espera un minuto y vuelve a abrirlo. Si sigue, reinicia la computadora. El registro de errores está en <code>C:\ProgramData\MiniSuper\logs\servidor.log</code>.</td></tr>
+  <tr><td>El instalador dice "No se pudo preparar la base de datos"</td><td>Abre <code>C:\ProgramData\MiniSuper\logs\instalacion.log</code> (o <code>%TEMP%\minisuper-instalacion.log</code>) y vuelve a ejecutar el instalador. No borra los datos que ya existían.</td></tr>
+  <tr><td>Olvidé la contraseña de <code>admin</code> de la tienda</td><td>Si hay otro administrador, que se la cambie en <strong>Usuarios</strong>. Si no, se restablece desde pgAdmin (ver Parte 6); pídeme ayuda.</td></tr>
+  <tr><td>"Demasiados intentos fallidos"</td><td>Se escribió mal la contraseña 5 veces: espera 5 minutos.</td></tr>
+  <tr><td>El ticket no sale en la impresora</td><td>Revisa que sea la impresora <strong>predeterminada</strong> de Windows y el ancho de papel en Configuración → Ticket.</td></tr>
+  <tr><td>El panel no muestra datos nuevos</td><td>En la tienda: Configuración → Ver la tienda desde la ciudad. Si dice <em>Sin conexión</em>, falta internet; usa la USB.</td></tr>
+  <tr><td>Se reinstaló Windows o se cambió la computadora</td><td>Restaura el último respaldo en la computadora nueva y, en tu PC, ejecuta en <code>nube</code>: <code>npm run desvincular-tienda -- &lt;id&gt;</code> para que el panel la acepte.</td></tr>
+</table>
+
+<h2>Parte 6 · Datos técnicos (para ti)</h2>
+<table>
+  <tr><th style="width:34%">Qué</th><th>Dónde / valor</th></tr>
+  <tr><td>Programa</td><td><code>C:\Program Files\MiniSuper</code> (Node, PostgreSQL 18 y la app)</td></tr>
+  <tr><td>Datos (solo administradores)</td><td><code>C:\ProgramData\MiniSuper</code>: <code>pgdata</code>, <code>respaldos</code>, <code>logs</code>, <code>.env</code></td></tr>
+  <tr><td>Base de datos</td><td>Servicio de Windows <strong>MiniSuperPostgreSQL</strong>, <code>localhost</code> puerto <strong>5433</strong>, base <code>minisuper</code>, usuario <code>postgres</code>, contraseña en <code>DB_PASSWORD</code> del <code>.env</code></td></tr>
+  <tr><td>Servidor del sistema</td><td>Tarea programada <strong>MiniSuper</strong> (al encender), <code>http://localhost:3000</code>, solo accesible desde esa computadora</td></tr>
+  <tr><td>Ver la base con pgAdmin</td><td>Instala pgAdmin aparte → <em>Register → Server</em>: Host <code>localhost</code>, Port <code>5433</code>, Username <code>postgres</code>, Password = <code>DB_PASSWORD</code> (abre el <code>.env</code> con el Bloc de notas como administrador)</td></tr>
+  <tr><td>Actualizar a una versión nueva</td><td>Ejecuta el <code>MiniSuper-Setup</code> nuevo encima. Conserva la base, los respaldos, el <code>.env</code> y las contraseñas. Debe traer la misma versión principal de PostgreSQL (18).</td></tr>
+  <tr><td>Desinstalar</td><td>Configuración de Windows → Aplicaciones → Mini Súper. Quita el programa y los servicios, pero <strong>no</strong> borra <code>C:\ProgramData\MiniSuper</code>.</td></tr>
+</table>
+
+<h2>Hoja de datos de la tienda</h2>
+<p>Llénala a mano y guárdala en un lugar seguro (no la dejes junto a la computadora).</p>
+<table class="hoja">
+  <tr><th>Dato</th><th>Valor</th></tr>
+  <tr><td>Nombre de la tienda en el panel (id)</td><td></td></tr>
+  <tr><td>Contraseña de <code>admin</code> en la tienda</td><td></td></tr>
+  <tr><td>Usuarios cajeros creados</td><td></td></tr>
+  <tr><td>Dirección del panel</td><td>https://minisuper-nube.onrender.com</td></tr>
+  <tr><td>Usuario y contraseña del panel</td><td></td></tr>
+  <tr><td>Clave de la tienda (SYNC_TOKEN) — guardada en</td><td></td></tr>
+  <tr><td>Fecha de instalación</td><td></td></tr>
+</table>
+
+</body>
+</html>
