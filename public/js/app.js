@@ -116,12 +116,21 @@ async function iniciar() {
       if (a.dataset.seccion === id) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
     }
-    vista.innerHTML = '<p class="muted">Cargando…</p>';
+    // Cada sección se dibuja en su propio contenedor. Con conexión lenta, si
+    // la sección anterior termina de cargar después de cambiar de sección,
+    // escribe en su contenedor viejo (ya fuera de la pantalla) y no encima de
+    // la nueva, que dejaría botones sin funcionar.
+    const senal = controlVista.signal;
+    const contenedor = document.createElement('div');
+    contenedor.style.display = 'contents'; // no cambia el diseño
+    contenedor.innerHTML = '<p class="muted">Cargando…</p>';
+    vista.replaceChildren(contenedor);
     try {
       const modulo = await import(seccion.modulo);
-      await modulo.render(vista, { ...ctx, ctx, senal: controlVista.signal, recargar: mostrar });
+      if (senal.aborted) return;
+      await modulo.render(contenedor, { ...ctx, ctx, senal, recargar: mostrar });
     } catch (err) {
-      vista.innerHTML = `<div class="panel"><p class="error-form">${esc(err.message)}</p></div>`;
+      if (!senal.aborted) contenedor.innerHTML = `<div class="panel"><p class="error-form">${esc(err.message)}</p></div>`;
     }
   }
 
